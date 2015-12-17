@@ -14,3 +14,16 @@ There are several operations required:
 * Embed the resulting hexified Python into the MicroPython runtime hex.
 * Discover the connected micro:bit.
 * Copy the resulting hex onto the micro:bit, thus flashing the device.
+
+Development
+-----------
+
+Ensure you have the correct dependancies for development installed by creating
+a virtualenv and running::
+
+    $ pip install -r requirements.txt
+
+Use
+---
+
+

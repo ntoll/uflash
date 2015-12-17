@@ -1,3 +1,5 @@
 *.swp
 *.pyc
 uflash.egg-info/*
+.cache/*
+.coverage
