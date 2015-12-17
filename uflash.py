@@ -6,7 +6,10 @@ BBC micro:bit.
 import sys
 import os
 import struct
+import string
 import binascii
+import ctypes
+from subprocess import check_output
 
 
 SCRIPT_ADDR = 0x3e000  # magic start address in flash of script
@@ -72,8 +75,53 @@ def find_microbit():
 
     Returns None if no micro:bit is found.
     """
-    # TODO: FUNKYHAT'S WORK HERE!!!!!
-    pass
+    if os.name == 'posix':
+        mount_output = check_output('mount').splitlines()
+        # (almost) list the mounted volumes.
+        mounted_volumes = [x.split()[2] for x in mount_output]
+
+        for volume in mounted_volumes:
+            if volume.endswith('MICROBIT'):
+                return volume
+
+    elif os.name == 'nt':
+        kernel32 = ctypes.windll.kernel32
+
+        vol_name_buf = ctypes.create_unicode_buffer(1024)
+        fs_name_buf = ctypes.create_unicode_buffer(1024)
+
+        serial_number = max_component_length = file_system_flags = None
+
+        def get_volume_name(volume):
+            """
+            Code from http://stackoverflow.com/a/12056414
+            """
+            kernel32.GetVolumeInformationW(
+                ctypes.c_wchar_p(volume + ":\\"),
+                vol_name_buf,
+                ctypes.sizeof(vol_name_buf),
+                serial_number,
+                max_component_length,
+                file_system_flags,
+                fs_name_buf,
+                ctypes.sizeof(fs_name_buf),
+            )
+
+            return vol_name_buf.value
+
+        drives = []
+        bitmask = kernel32.GetLogicalDrives()
+        for letter in string.uppercase:
+            if bitmask & 1:
+                drives.append(letter)
+            bitmask >>= 1
+
+        for letter in drives:
+            if get_volume_name(drives) == 'MICROBIT':
+                return letter
+
+    else:
+        raise NotImplementedError('OS not supported :(')
 
 
 def save_hex(hex_file, path):
