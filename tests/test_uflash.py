@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 """
-Tests for the gordon module.
+Tests for the uflash module.
 """

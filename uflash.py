@@ -44,7 +44,7 @@ def flash(hex_file, path):
 
 def main(argv=sys.argv[1:]):
     """
-    Entry point for the command line tool 'gordon'.
+    Entry point for the command line tool 'uflash'.
     """
     pass
 
