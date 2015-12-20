@@ -180,24 +180,45 @@ def test_save_hex_path_not_to_hex_file():
 
 def test_flash_no_args():
     """
-    The good case. When it's possible to find a path to the micro:bit.
+    The good case with no arguments to the flash() function. When it's
+    possible to find a path to the micro:bit.
+
+    If no path to a Python script is supplied then just flash the unmodified
+    MicroPython firmware onto the device.
     """
-    assert False
+    with mock.patch('uflash.find_microbit', return_value='foo'):
+        with mock.patch('uflash.save_hex') as mock_save:
+            uflash.flash()
+            assert mock_save.call_count == 1
+            with open('firmware.hex', 'r') as firmware_file:
+                expected_firmware = firmware_file.read()
+                assert mock_save.call_args[0][0] == expected_firmware
+            expected_path = os.path.join('foo', 'micropython.hex')
+            assert mock_save.call_args[0][1] == expected_path
 
 
-def test_flash_no_path_to_microbit():
+def test_flash_has_python_no_path_to_microbit():
     """
-    The good case. When it's possible to find a path to the micro:bit.
-    """
-    assert False
+    The good case with a path to a Python file. When it's possible to find a
+    path to the micro:bit.
 
-
-def test_flash_no_path_to_python():
+    The resulting payload should be a correctly created micropython.hex file.
     """
-    Flash the referenced path to the micro:bit with the unmodified MicroPython
-    firmware.
-    """
-    assert False
+    with mock.patch('uflash.find_microbit', return_value='foo'):
+        with mock.patch('uflash.save_hex') as mock_save:
+            uflash.flash('tests/example.py')
+            assert mock_save.call_count == 1
+            # Create the hex we're expecting to flash onto the device.
+            with open('firmware.hex', 'r') as firmware_file:
+                firmware = firmware_file.read()
+            assert firmware
+            with open('tests/example.py', 'rb') as py_file:
+                python = uflash.hexlify(py_file.read())
+            assert python
+            expected_hex = uflash.embed_hex(python, firmware)
+            assert mock_save.call_args[0][0] == expected_hex
+            expected_path = os.path.join('foo', 'micropython.hex')
+            assert mock_save.call_args[0][1] == expected_path
 
 
 def test_flash_with_paths():
@@ -205,11 +226,28 @@ def test_flash_with_paths():
     Flash the referenced path to the micro:bit with a hex file generated from
     the MicroPython firmware and the referenced Python script.
     """
-    assert False
+    with mock.patch('uflash.save_hex') as mock_save:
+        uflash.flash('tests/example.py', 'test_path')
+        assert mock_save.call_count == 1
+        # Create the hex we're expecting to flash onto the device.
+        with open('firmware.hex', 'r') as firmware_file:
+            firmware = firmware_file.read()
+        assert firmware
+        with open('tests/example.py', 'rb') as py_file:
+            python = uflash.hexlify(py_file.read())
+        assert python
+        expected_hex = uflash.embed_hex(python, firmware)
+        assert mock_save.call_args[0][0] == expected_hex
+        expected_path = os.path.join('test_path', 'micropython.hex')
+        assert mock_save.call_args[0][1] == expected_path
 
 
 def test_flash_cannot_find_microbit():
     """
     Ensure an IOError is raised if it is not possible to find the micro:bit.
     """
-    assert False
+    with mock.patch('uflash.find_microbit', return_value=None):
+        with pytest.raises(IOError) as ex:
+            uflash.flash()
+        expected = 'Unable to find micro:bit. Is it plugged in?'
+        assert ex.value.args[0] == expected
