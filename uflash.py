@@ -7,6 +7,8 @@ import sys
 import os
 import struct
 import binascii
+import ctypes
+from subprocess import check_output
 
 
 SCRIPT_ADDR = 0x3e000  # magic start address in flash of script
@@ -21,15 +23,18 @@ def hexlify(script):
     """
     if not script:
         return ''
-    # add header, pad to multiple of 16 bytes
+    # Convert line endings in case the file was created on Windows.
+    script = script.replace(b'\r\n', b'\n')
+    script = script.replace(b'\r', b'\n')
+    # Add header, pad to multiple of 16 bytes.
     data = b'MP' + struct.pack('<H', len(script)) + script
     data = data + bytes(16 - len(data) % 16)
     assert len(data) <= 0x2000
-    # convert to .hex format
+    # Convert to .hex format.
     output = []
     addr = SCRIPT_ADDR
-    assert(SCRIPT_ADDR >> 16 == 3)  # 0x0003 is hard coded in line below
-    output.append(':020000040003F7')  # extended linear address, 0x0003
+    assert(SCRIPT_ADDR >> 16 == 3)  # 0x0003 is hard coded in line below.
+    output.append(':020000040003F7')  # extended linear address, 0x0003.
     for i in range(0, len(data), 16):
         chunk = data[i:min(i + 16, len(data))]
         chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, 0) + chunk
@@ -62,7 +67,7 @@ def embed_hex(python_hex, firmware_hex):
     embedded_list.extend(firm_list[:-2])
     embedded_list.extend(py_list)
     embedded_list.extend(firm_list[-2:])
-    return '\n'.join(embedded_list)
+    return '\n'.join(embedded_list) + '\n'
 
 
 def find_microbit():
@@ -72,8 +77,49 @@ def find_microbit():
 
     Returns None if no micro:bit is found.
     """
-    # TODO: FUNKYHAT'S WORK HERE!!!!!
-    pass
+    # Check what sort of operating system we're on.
+    if os.name == 'posix':
+        # 'posix' means we're on Linux or OSX (Mac).
+        # Call the unix "mount" command to list the mounted volumes.
+        mount_output = check_output('mount').splitlines()
+        mounted_volumes = [x.split()[2] for x in mount_output]
+        for volume in mounted_volumes:
+            if volume.endswith(b'MICROBIT'):
+                return volume.decode('utf-8')  # Return a string not bytes.
+    elif os.name == 'nt':
+        # 'nt' means we're on Windows.
+        kernel32 = ctypes.windll.kernel32
+
+        def get_volume_name(disk_name):
+            """
+            Each disk or external device connected to windows has an attribute
+            called "volume name". This function returns the volume name for
+            the given disk/device.
+
+            Code from http://stackoverflow.com/a/12056414
+            """
+            vol_name_buf = ctypes.create_unicode_buffer(1024)
+            fs_name_buf = ctypes.create_unicode_buffer(1024)
+            serial_number = max_component_length = file_system_flags = None
+            kernel32.GetVolumeInformationW(
+                ctypes.c_wchar_p(disk_name),
+                vol_name_buf,
+                ctypes.sizeof(vol_name_buf),
+                serial_number,
+                max_component_length,
+                file_system_flags,
+                fs_name_buf,
+                ctypes.sizeof(fs_name_buf),
+            )
+            return vol_name_buf.value
+
+        for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            path = '{}:\\'.format(disk)
+            if os.path.exists(path) and get_volume_name(path) == 'MICROBIT':
+                return path
+    else:
+        # We don't support an unknown operating system.
+        raise NotImplementedError('OS not supported.')
 
 
 def save_hex(hex_file, path):
