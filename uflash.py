@@ -118,7 +118,6 @@ def find_microbit():
                 return volume.decode('utf-8')  # Return a string not bytes.
     elif os.name == 'nt':
         # 'nt' means we're on Windows.
-        kernel32 = ctypes.windll.kernel32
 
         def get_volume_name(disk_name):
             """
@@ -129,18 +128,9 @@ def find_microbit():
             Code from http://stackoverflow.com/a/12056414
             """
             vol_name_buf = ctypes.create_unicode_buffer(1024)
-            fs_name_buf = ctypes.create_unicode_buffer(1024)
-            serial_number = max_component_length = file_system_flags = None
-            kernel32.GetVolumeInformationW(
-                ctypes.c_wchar_p(disk_name),
-                vol_name_buf,
-                ctypes.sizeof(vol_name_buf),
-                serial_number,
-                max_component_length,
-                file_system_flags,
-                fs_name_buf,
-                ctypes.sizeof(fs_name_buf),
-            )
+            ctypes.windll.kernel32.GetVolumeInformationW(
+                ctypes.c_wchar_p(disk_name), vol_name_buf,
+                ctypes.sizeof(vol_name_buf), None, None, None, None, 0)
             return vol_name_buf.value
 
         for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
@@ -148,7 +138,7 @@ def find_microbit():
             if os.path.exists(path) and get_volume_name(path) == 'MICROBIT':
                 return path
     else:
-        # We don't support an unknown operating system.
+        # No support for unknown operating systems.
         raise NotImplementedError('OS not supported.')
 
 
