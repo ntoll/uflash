@@ -9,14 +9,29 @@ with open('CHANGES.rst') as f:
 
 setup(
     name='uflash',
-    version='0.0.1',
+    version='0.9.0',
     description='A module and utility to flash Python onto the BBC micro:bit.',
     long_description=readme + '\n\n' + changes,
     author='Nicholas H.Tollervey',
     author_email='ntoll@ntoll.org',
-    url='http://micropython.org/',
+    url='https://github.com/ntoll/uflash',
     package_dir={'uflash': 'uflash'},
     package_data={'': ['firmware.hex', 'README.rst', 'CHANGES.rst', 'LICENSE',
                        'AUTHORS']},
     license='MIT',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Education',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: POSIX',
+        'Operating System :: Microsoft :: Windows',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Education',
+        'Topic :: Software Development :: Embedded Systems',
+    ],
+    entry_points={
+        'console_scripts': ['uflash=uflash:main'],
+    }
 )

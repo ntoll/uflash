@@ -14,6 +14,17 @@ from subprocess import check_output
 SCRIPT_ADDR = 0x3e000  # magic start address in flash of script
 
 
+HELP_TEXT = """
+Flash Python onto the BBC micro:bit
+
+Usage: uflash [path_to_script.py] [path_to_microbit]
+
+If no path to the micro:bit is provided uflash will attempt to autodetect the
+correct path to the device. If no path to the Python script is provided uflash
+will flash the unmodified MicroPython firmware onto the device.
+"""
+
+
 def hexlify(script):
     """
     Takes the byte content of a Python script and returns an appropriately
@@ -46,27 +57,27 @@ def hexlify(script):
     return '\n'.join(output)
 
 
-def embed_hex(python_hex, firmware_hex):
+def embed_hex(python_hex, runtime_hex):
     """
     Takes a hex encoded Python fragment and appropriately embeds it into the
-    referenced MicroPython firmware hex.
+    referenced MicroPython runtime hex.
 
     Returns a string representation of the resulting combination.
 
-    If the python_hex is empty, will return the unmodified firmware_hex.
+    If the python_hex is empty, will return the unmodified runtime_hex.
     """
-    if not firmware_hex:
-        return ''
+    if not runtime_hex:
+        raise ValueError('MicroPython runtime hex required.')
     if not python_hex:
-        return firmware_hex
+        return runtime_hex
     py_list = python_hex.split()
-    firm_list = firmware_hex.split()
+    runtime_list = runtime_hex.split()
     embedded_list = []
-    # The embedded list should be the original firmware with the Python based
+    # The embedded list should be the original runtime with the Python based
     # hex embedded two lines from the end.
-    embedded_list.extend(firm_list[:-2])
+    embedded_list.extend(runtime_list[:-2])
     embedded_list.extend(py_list)
-    embedded_list.extend(firm_list[-2:])
+    embedded_list.extend(runtime_list[-2:])
     return '\n'.join(embedded_list) + '\n'
 
 
@@ -124,8 +135,8 @@ def find_microbit():
 
 def save_hex(hex_file, path):
     """
-    Given a string representation of a hex file, copies to the specified path
-    thus causing the device mounted at that point to be flashed.
+    Given a string representation of a hex file, copies it to the specified
+    path thus causing the device mounted at that point to be flashed.
 
     If the path is not to a .hex file, will raise a ValueError.
     """
@@ -140,15 +151,18 @@ def save_hex(hex_file, path):
 def flash(path_to_python=None, path_to_microbit=None):
     """
     Given a path to a Python file will attempt to create a hex file and then
-    flash it onto the microbit (identified by path_to_microbit).
+    flash it onto the microbit.
 
-    If the path to the Python file is unspecified it will simply flash the
-    unmodified MicroPython firmware onto the device.
+    If the path_to_python is unspecified it will simply flash the unmodified
+    MicroPython runtime onto the device.
 
-    If the microbit is unspecified it will attempt to find the device's path
-    automatically. If the automatic discovery fails, then it will raise an
-    IOError.
+    If the path_to_microbit is unspecified it will attempt to find the device's
+    path automatically. If the automatic discovery fails, then it will raise
+    an IOError.
     """
+    # Check for the correct version of Python.
+    if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
+        raise RuntimeError('Will only run on Python 3.3 or later.')
     # Grab the MicroPython runtime firmware.hex.
     firmware_hex = None
     firmware_dir = os.path.dirname(os.path.abspath(__file__))
@@ -160,10 +174,8 @@ def flash(path_to_python=None, path_to_microbit=None):
     if path_to_python:
         with open(path_to_python, 'rb') as python_script:
             python_hex = hexlify(python_script.read())
-    # Generate and check the resulting hex file.
+    # Generate the resulting hex file.
     micropython_hex = embed_hex(python_hex, firmware_hex)
-    if not micropython_hex:
-        raise IOError('Unable to create hex file.')
     # Find the micro:bit.
     if not path_to_microbit:
         path_to_microbit = find_microbit()
@@ -179,9 +191,27 @@ def flash(path_to_python=None, path_to_microbit=None):
 def main(argv=sys.argv[1:]):
     """
     Entry point for the command line tool 'uflash'.
+
+    Will print help text if the optional first argument is "help". Otherwise
+    it will ensure the optional first argument ends in ".py" (the source
+    Python script). An optional second argument can reference the path to the
+    micro:bit device. Any more arguments are ignored.
+
+    Exceptions are caught and printed back to the user.
     """
-    pass
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+    arg_len = len(argv)
+    try:
+        if arg_len == 0:
+            flash()
+        elif arg_len >= 1:
+            if argv[0] == 'help':
+                print(HELP_TEXT)
+            if not argv[0].lower().endswith('.py'):
+                raise ValueError('Python files must end in ".py".')
+            if arg_len == 1:
+                flash(argv[0])
+            elif arg_len > 1:
+                flash(argv[0], argv[1])
+    except Exception as ex:
+        # The exception of no return. Respond with something nice to the user.
+        print(ex)

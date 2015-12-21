@@ -70,11 +70,13 @@ def test_embed_no_python():
     assert uflash.embed_hex('', 'foo') == 'foo'
 
 
-def test_embed_no_firmware():
+def test_embed_no_runtime():
     """
-    The function returns an empty string if there is no firmware hex.
+    The function raises a ValueError if there is no runtime hex.
     """
-    assert uflash.embed_hex('foo', '') == ''
+    with pytest.raises(ValueError) as ex:
+        uflash.embed_hex('foo', '')
+    assert ex.value.args[0] == 'MicroPython runtime hex required.'
 
 
 def test_find_microbit_posix_exists():
@@ -135,6 +137,16 @@ def test_find_microbit_nt_missing():
                             return_value=return_value):
                 ctypes.windll = mock_windll
                 assert uflash.find_microbit() == None
+
+
+def test_find_microbit_unknown_os():
+    """
+    Raises a NotImplementedError if the host OS is not supported.
+    """
+    with mock.patch('os.name', 'foo'):
+        with pytest.raises(NotImplementedError) as ex:
+            uflash.find_microbit()
+    assert ex.value.args[0] == 'OS not supported.'
 
 
 def test_save_hex():
@@ -250,4 +262,75 @@ def test_flash_cannot_find_microbit():
         with pytest.raises(IOError) as ex:
             uflash.flash()
         expected = 'Unable to find micro:bit. Is it plugged in?'
-        assert ex.value.args[0] == expected
+    assert ex.value.args[0] == expected
+
+
+def test_flash_wrong_python():
+    """
+    Ensures a call to flash will fail if it's not reported that we're using
+    Python 3.
+    """
+    with mock.patch('sys.version_info', (2, 7, 9)):
+        with pytest.raises(RuntimeError) as ex:
+            uflash.flash()
+    assert ex.value.args[0] == 'Will only run on Python 3.3 or later.'
+
+
+def test_main_no_args():
+    """
+    If there are no args into the main function, it simply calls flash with
+    no arguments.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=[])
+        assert mock_flash.called_once_with()
+
+
+def test_main_first_arg_python():
+    """
+    If there is a single argument that ends with ".py", it calls flash with
+    it as the path to the source Python file.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['foo.py'])
+        assert mock_flash.called_once_with('foo.py')
+
+
+def test_main_first_arg_help():
+    """
+    If there is a single argument of "help", it prints some help.
+    """
+    with mock.patch('builtins.print') as mock_print:
+        uflash.main(argv=['help'])
+        assert mock_print.called_once_with(uflash.HELP_TEXT)
+
+
+def test_main_first_arg_not_python():
+    """
+    If the first argument does not end in ".py" then it should display a useful
+    error message.
+    """
+    with mock.patch('builtins.print') as mock_print:
+        uflash.main(argv=['foo.bar'])
+        expected = ValueError('Python files must end in ".py".')
+        assert mock_print.called_once_with(expected)
+
+
+def test_main_two_args():
+    """
+    If there are two arguments passed into main, then it should pass them onto
+    the flash() function.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['foo.py', '/media/foo/bar'])
+        assert mock_flash.called_once_with('foo.py', '/media/foo/bar')
+
+
+def test_main_extra_args_ignored():
+    """
+    Any arguments more than two are ignored, with only the first two passed
+    into the flash() function.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['foo.py', '/media/foo/bar', 'baz', 'quux'])
+        assert mock_flash.called_once_with('foo.py', '/media/foo/bar')

@@ -1,6 +1,15 @@
 Release History
 ---------------
 
+0.9.0
++++++
+
+* Feature complete.
+* Comprehensive test suite - 100% coverage.
+* Tested on Linux and Windows.
+* Documentation.
+* Access via the "uflash" command.
+
 0.0.1
 +++++
 
