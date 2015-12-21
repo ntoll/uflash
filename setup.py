@@ -16,7 +16,7 @@ setup(
     author_email='ntoll@ntoll.org',
     url='https://github.com/ntoll/uflash',
     package_dir={'uflash': 'uflash'},
-    package_data={'': ['firmware.hex', 'README.rst', 'CHANGES.rst',]},
+    package_data={'': ['firmware.hex', 'README.rst', 'CHANGES.rst', ]},
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
