@@ -9,7 +9,7 @@ with open('CHANGES.rst') as f:
 
 setup(
     name='uflash',
-    version='0.9.1',
+    version='0.9.2',
     description='A module and utility to flash Python onto the BBC micro:bit.',
     long_description=readme + '\n\n' + changes,
     author='Nicholas H.Tollervey',
