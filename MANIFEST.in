@@ -1,4 +1,3 @@
 include firmware.hex
 include CHANGES.rst
 include README.rst
-include uflash.py

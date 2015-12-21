@@ -4,3 +4,4 @@ uflash.egg-info/*
 .cache/*
 .coverage
 dist/*
+build/*
