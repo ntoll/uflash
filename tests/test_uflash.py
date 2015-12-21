@@ -42,13 +42,10 @@ def test_embed_hex():
     """
     Ensure the good case works as expected.
     """
-    with open('firmware.hex', 'r') as firmware_file:
-        firmware = firmware_file.read()
-    assert firmware
     python = uflash.hexlify(TEST_SCRIPT)
-    result = uflash.embed_hex(python, firmware)
+    result = uflash.embed_hex(python, uflash.RUNTIME)
     # The resulting hex should be of the expected length.
-    assert len(result) == len(python) + len(firmware) + 1  # +1 for final \n
+    assert len(result) == len(python) + len(uflash.RUNTIME) + 1  # +1 for \n
     # The hex should end with a newline '\n'
     assert result[-1:] == '\n'
     # The Python hex should be in the correct location.
@@ -58,7 +55,7 @@ def test_embed_hex():
     start_of_python = len(result_list) - start_of_python_from_end
     assert result_list[start_of_python:-2] == py_list
     # The firmware should enclose the Python correctly.
-    firmware_list = firmware.split()
+    firmware_list = uflash.RUNTIME.split()
     assert firmware_list[:-2] == result_list[:-start_of_python_from_end]
     assert firmware_list[-2:] == result_list[-2:]
 
@@ -159,11 +156,8 @@ def test_save_hex():
         os.remove(path_to_hex)
     assert not os.path.exists(path_to_hex)
     # Create the hex file we want to "flash"
-    with open('firmware.hex', 'r') as firmware_file:
-        firmware = firmware_file.read()
-    assert firmware
     python = uflash.hexlify(TEST_SCRIPT)
-    hex_file = uflash.embed_hex(python, firmware)
+    hex_file = uflash.embed_hex(python, uflash.RUNTIME)
     # Save the hex.
     uflash.save_hex(hex_file, path_to_hex)
     # Ensure the hex has been written as expected.
@@ -202,9 +196,7 @@ def test_flash_no_args():
         with mock.patch('uflash.save_hex') as mock_save:
             uflash.flash()
             assert mock_save.call_count == 1
-            with open('firmware.hex', 'r') as firmware_file:
-                expected_firmware = firmware_file.read()
-                assert mock_save.call_args[0][0] == expected_firmware
+            assert mock_save.call_args[0][0] == uflash.RUNTIME
             expected_path = os.path.join('foo', 'micropython.hex')
             assert mock_save.call_args[0][1] == expected_path
 
@@ -221,13 +213,10 @@ def test_flash_has_python_no_path_to_microbit():
             uflash.flash('tests/example.py')
             assert mock_save.call_count == 1
             # Create the hex we're expecting to flash onto the device.
-            with open('firmware.hex', 'r') as firmware_file:
-                firmware = firmware_file.read()
-            assert firmware
             with open('tests/example.py', 'rb') as py_file:
                 python = uflash.hexlify(py_file.read())
             assert python
-            expected_hex = uflash.embed_hex(python, firmware)
+            expected_hex = uflash.embed_hex(python, uflash.RUNTIME)
             assert mock_save.call_args[0][0] == expected_hex
             expected_path = os.path.join('foo', 'micropython.hex')
             assert mock_save.call_args[0][1] == expected_path
@@ -242,13 +231,10 @@ def test_flash_with_paths():
         uflash.flash('tests/example.py', 'test_path')
         assert mock_save.call_count == 1
         # Create the hex we're expecting to flash onto the device.
-        with open('firmware.hex', 'r') as firmware_file:
-            firmware = firmware_file.read()
-        assert firmware
         with open('tests/example.py', 'rb') as py_file:
             python = uflash.hexlify(py_file.read())
         assert python
-        expected_hex = uflash.embed_hex(python, firmware)
+        expected_hex = uflash.embed_hex(python, uflash.RUNTIME)
         assert mock_save.call_args[0][0] == expected_hex
         expected_path = os.path.join('test_path', 'micropython.hex')
         assert mock_save.call_args[0][1] == expected_path

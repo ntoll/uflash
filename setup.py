@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
+
 with open('README.rst') as f:
     readme = f.read()
 with open('CHANGES.rst') as f:
@@ -9,15 +10,13 @@ with open('CHANGES.rst') as f:
 
 setup(
     name='uflash',
-    version='0.9.0',
+    version='0.9.14',
     description='A module and utility to flash Python onto the BBC micro:bit.',
     long_description=readme + '\n\n' + changes,
     author='Nicholas H.Tollervey',
     author_email='ntoll@ntoll.org',
     url='https://github.com/ntoll/uflash',
     py_modules=['uflash', ],
-    include_package_data=True,
-    data_files=[('', ['firmware.hex', ]), ],
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
