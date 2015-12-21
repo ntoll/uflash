@@ -81,6 +81,29 @@ def embed_hex(python_hex, runtime_hex):
     return '\n'.join(embedded_list) + '\n'
 
 
+def _get_volume_name(disk_name):
+    """
+    Each disk or external device connected to windows has an attribute
+    called "volume name". This function returns the volume name for
+    the given disk/device.
+
+    Code from http://stackoverflow.com/a/12056414
+    """
+    vol_name_buf = ctypes.create_unicode_buffer(1024)
+    serial_number = max_component_length = file_system_flags = fs_name = None
+    ctypes.windll.kernel32.GetVolumeInformationW(
+        ctypes.c_wchar_p(disk_name),
+        vol_name_buf,
+        ctypes.sizeof(vol_name_buf),
+        serial_number,
+        max_component_length,
+        file_system_flags,
+        fs_name,
+        0,
+    )
+    return vol_name_buf.value
+
+
 def find_microbit():
     """
     Returns a path on the filesystem that represents the plugged in BBC
@@ -99,34 +122,9 @@ def find_microbit():
                 return volume.decode('utf-8')  # Return a string not bytes.
     elif os.name == 'nt':
         # 'nt' means we're on Windows.
-        kernel32 = ctypes.windll.kernel32
-
-        def get_volume_name(disk_name):
-            """
-            Each disk or external device connected to windows has an attribute
-            called "volume name". This function returns the volume name for
-            the given disk/device.
-
-            Code from http://stackoverflow.com/a/12056414
-            """
-            vol_name_buf = ctypes.create_unicode_buffer(1024)
-            fs_name_buf = ctypes.create_unicode_buffer(1024)
-            serial_number = max_component_length = file_system_flags = None
-            kernel32.GetVolumeInformationW(
-                ctypes.c_wchar_p(disk_name),
-                vol_name_buf,
-                ctypes.sizeof(vol_name_buf),
-                serial_number,
-                max_component_length,
-                file_system_flags,
-                fs_name_buf,
-                ctypes.sizeof(fs_name_buf),
-            )
-            return vol_name_buf.value
-
         for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             path = '{}:\\'.format(disk)
-            if os.path.exists(path) and get_volume_name(path) == 'MICROBIT':
+            if os.path.exists(path) and _get_volume_name(path) == 'MICROBIT':
                 return path
     else:
         # We don't support an unknown operating system.
