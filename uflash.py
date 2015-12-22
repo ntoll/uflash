@@ -11,10 +11,12 @@ import ctypes
 from subprocess import check_output
 
 
-SCRIPT_ADDR = 0x3e000  # magic start address in flash of script
+#: The magic start address in flash memory for a Python script.
+_SCRIPT_ADDR = 0x3e000
 
 
-HELP_TEXT = """
+#: The help text to be shown when requested.
+_HELP_TEXT = """
 Flash Python onto the BBC micro:bit
 
 Usage: uflash [path_to_script.py] [path_to_microbit]
@@ -23,6 +25,17 @@ If no path to the micro:bit is provided uflash will attempt to autodetect the
 correct path to the device. If no path to the Python script is provided uflash
 will flash the unmodified MicroPython firmware onto the device.
 """
+
+
+#: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
+_VERSION = (0, 9, 14, 'beta', 0)
+
+
+def get_version():
+    """
+    Returns a string representation of the version information of this project.
+    """
+    return '.'.join([str(i) for i in _VERSION])
 
 
 def hexlify(script):
@@ -43,8 +56,8 @@ def hexlify(script):
     assert len(data) <= 0x2000
     # Convert to .hex format.
     output = []
-    addr = SCRIPT_ADDR
-    assert(SCRIPT_ADDR >> 16 == 3)  # 0x0003 is hard coded in line below.
+    addr = _SCRIPT_ADDR
+    assert(_SCRIPT_ADDR >> 16 == 3)  # 0x0003 is hard coded in line below.
     output.append(':020000040003F7')  # extended linear address, 0x0003.
     for i in range(0, len(data), 16):
         chunk = data[i:min(i + 16, len(data))]
@@ -169,7 +182,7 @@ def flash(path_to_python=None, path_to_microbit=None):
         with open(path_to_python, 'rb') as python_script:
             python_hex = hexlify(python_script.read())
     # Generate the resulting hex file.
-    micropython_hex = embed_hex(python_hex, RUNTIME)
+    micropython_hex = embed_hex(python_hex, _RUNTIME)
     # Find the micro:bit.
     if not path_to_microbit:
         path_to_microbit = find_microbit()
@@ -182,7 +195,7 @@ def flash(path_to_python=None, path_to_microbit=None):
         raise IOError('Unable to find micro:bit. Is it plugged in?')
 
 
-def main(argv=sys.argv[1:]):
+def main(argv=None):
     """
     Entry point for the command line tool 'uflash'.
 
@@ -193,13 +206,15 @@ def main(argv=sys.argv[1:]):
 
     Exceptions are caught and printed back to the user.
     """
+    if not argv:
+        argv = sys.argv[1:]
     arg_len = len(argv)
     try:
         if arg_len == 0:
             flash()
         elif arg_len >= 1:
             if argv[0] == 'help':
-                print(HELP_TEXT)
+                print(_HELP_TEXT)
                 return
             if not argv[0].lower().endswith('.py'):
                 raise ValueError('Python files must end in ".py".')
@@ -212,8 +227,8 @@ def main(argv=sys.argv[1:]):
         print(ex)
 
 
-# The MicroPython runtime.
-RUNTIME = """:020000040000FA
+#: A string representation of the MicroPython runtime hex.
+_RUNTIME = """:020000040000FA
 :1000000000400020E91F01002520010027200100F9
 :1000100000000000000000000000000000000000E0
 :100020000000000000000000000000002920010086

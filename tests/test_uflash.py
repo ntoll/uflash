@@ -18,6 +18,14 @@ display.scroll('Hello, World!')
 """
 
 
+def test_get_version():
+    """
+    Ensure a call to get_version returns the expected string.
+    """
+    result = uflash.get_version()
+    assert result == '.'.join([str(i) for i in uflash._VERSION])
+
+
 def test_hexlify():
     """
     Ensure we get the expected .hex encoded result from a "good" call to the
@@ -43,9 +51,9 @@ def test_embed_hex():
     Ensure the good case works as expected.
     """
     python = uflash.hexlify(TEST_SCRIPT)
-    result = uflash.embed_hex(python, uflash.RUNTIME)
+    result = uflash.embed_hex(python, uflash._RUNTIME)
     # The resulting hex should be of the expected length.
-    assert len(result) == len(python) + len(uflash.RUNTIME) + 1  # +1 for \n
+    assert len(result) == len(python) + len(uflash._RUNTIME) + 1  # +1 for \n
     # The hex should end with a newline '\n'
     assert result[-1:] == '\n'
     # The Python hex should be in the correct location.
@@ -55,7 +63,7 @@ def test_embed_hex():
     start_of_python = len(result_list) - start_of_python_from_end
     assert result_list[start_of_python:-2] == py_list
     # The firmware should enclose the Python correctly.
-    firmware_list = uflash.RUNTIME.split()
+    firmware_list = uflash._RUNTIME.split()
     assert firmware_list[:-2] == result_list[:-start_of_python_from_end]
     assert firmware_list[-2:] == result_list[-2:]
 
@@ -157,7 +165,7 @@ def test_save_hex():
     assert not os.path.exists(path_to_hex)
     # Create the hex file we want to "flash"
     python = uflash.hexlify(TEST_SCRIPT)
-    hex_file = uflash.embed_hex(python, uflash.RUNTIME)
+    hex_file = uflash.embed_hex(python, uflash._RUNTIME)
     # Save the hex.
     uflash.save_hex(hex_file, path_to_hex)
     # Ensure the hex has been written as expected.
@@ -196,7 +204,7 @@ def test_flash_no_args():
         with mock.patch('uflash.save_hex') as mock_save:
             uflash.flash()
             assert mock_save.call_count == 1
-            assert mock_save.call_args[0][0] == uflash.RUNTIME
+            assert mock_save.call_args[0][0] == uflash._RUNTIME
             expected_path = os.path.join('foo', 'micropython.hex')
             assert mock_save.call_args[0][1] == expected_path
 
@@ -216,7 +224,7 @@ def test_flash_has_python_no_path_to_microbit():
             with open('tests/example.py', 'rb') as py_file:
                 python = uflash.hexlify(py_file.read())
             assert python
-            expected_hex = uflash.embed_hex(python, uflash.RUNTIME)
+            expected_hex = uflash.embed_hex(python, uflash._RUNTIME)
             assert mock_save.call_args[0][0] == expected_hex
             expected_path = os.path.join('foo', 'micropython.hex')
             assert mock_save.call_args[0][1] == expected_path
@@ -234,7 +242,7 @@ def test_flash_with_paths():
         with open('tests/example.py', 'rb') as py_file:
             python = uflash.hexlify(py_file.read())
         assert python
-        expected_hex = uflash.embed_hex(python, uflash.RUNTIME)
+        expected_hex = uflash.embed_hex(python, uflash._RUNTIME)
         assert mock_save.call_args[0][0] == expected_hex
         expected_path = os.path.join('test_path', 'micropython.hex')
         assert mock_save.call_args[0][1] == expected_path
@@ -267,9 +275,11 @@ def test_main_no_args():
     If there are no args into the main function, it simply calls flash with
     no arguments.
     """
-    with mock.patch('uflash.flash') as mock_flash:
-        uflash.main(argv=[])
-        assert mock_flash.called_once_with()
+    with mock.patch('sys.argv', ['uflash', ]):
+        with mock.patch('uflash.flash') as mock_flash:
+            uflash.main()
+            assert mock_flash.call_count == 1
+            assert mock_flash.call_args == ()
 
 
 def test_main_first_arg_python():
@@ -288,7 +298,7 @@ def test_main_first_arg_help():
     """
     with mock.patch('builtins.print') as mock_print:
         uflash.main(argv=['help'])
-        assert mock_print.called_once_with(uflash.HELP_TEXT)
+        assert mock_print.called_once_with(uflash._HELP_TEXT)
 
 
 def test_main_first_arg_not_python():
