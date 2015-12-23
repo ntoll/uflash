@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Contents &mdash; uFlash 0.0.1 documentation</title>
+    <title>uFlash &mdash; uFlash 0.0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,7 +24,6 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="uFlash 0.0.1 documentation" href="#" />
-    <link rel="next" title="Contents" href="" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -37,30 +36,12 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="contents">
-<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Contents</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html">uFlash - Developer Documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#uflash">uFlash</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#command-usage">Command Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#development">Development</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#contributing-to-uflash">Contributing to uFlash</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">uFlash - Developer Documentation</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="uflash">
+  <div class="section" id="uflash">
 <h1>uFlash<a class="headerlink" href="#uflash" title="Permalink to this headline">¶</a></h1>
+<p><strong>THIS MODULE ONLY WORKS WITH PYTHON 3.</strong></p>
 <p>A utility for flashing the BBC micro:bit with Python scripts and the
-MicroPython runtime.</p>
-<p>This module provides two services:</p>
+MicroPython runtime. You pronounce the name of this utility &#8220;micro-flash&#8221;. ;-)</p>
+<p>It provides two services:</p>
 <ol class="arabic simple">
 <li>A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.</li>
 <li>A command line utility called <cite>uflash</cite> that will flash Python scripts onto a BBC micro:bit.</li>
@@ -74,7 +55,6 @@ MicroPython runtime.</p>
 </ul>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>THIS MODULE ONLY WORKS WITH PYTHON 3.</p>
 <p>To install simply type:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ pip install uflash
 </pre></div>
@@ -164,6 +144,97 @@ therein.</li>
 <li>Have fun!</li>
 </ul>
 </div>
+<div class="section" id="module-uflash">
+<span id="api"></span><h1>API<a class="headerlink" href="#module-uflash" title="Permalink to this headline">¶</a></h1>
+<p>This module contains functions for turning a Python script into a .hex file
+and flashing it onto a BBC micro:bit.</p>
+<dl class="function">
+<dt id="uflash.embed_hex">
+<code class="descclassname">uflash.</code><code class="descname">embed_hex</code><span class="sig-paren">(</span><em>runtime_hex</em>, <em>python_hex=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#embed_hex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.embed_hex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a string representing the MicroPython runtime hex, will embed a
+string representing a hex encoded Python script into it.</p>
+<p>Returns a string representation of the resulting combination.</p>
+<p>Will raise a ValueError if the runtime_hex is missing.</p>
+<p>If the python_hex is missing, it will return the unmodified runtime_hex.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.find_microbit">
+<code class="descclassname">uflash.</code><code class="descname">find_microbit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#find_microbit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.find_microbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a path on the filesystem that represents the plugged in BBC
+micro:bit that is to be flashed. If no micro:bit is found, it returns
+None.</p>
+<p>Works on Linux, OSX and Windows. Will raise a NotImplementedError
+exception if run on any other operating system.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.flash">
+<code class="descclassname">uflash.</code><code class="descname">flash</code><span class="sig-paren">(</span><em>path_to_python=None</em>, <em>path_to_microbit=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#flash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.flash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path to a Python file will attempt to create a hex file and then
+flash it onto the referenced BBC micro:bit.</p>
+<p>If the path_to_python is unspecified it will simply flash the unmodified
+MicroPython runtime onto the device.</p>
+<p>If the path_to_microbit is unspecified it will attempt to find the device&#8217;s
+path on the filesystem automatically.</p>
+<p>If the automatic discovery fails, then it will raise an IOError.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.get_version">
+<code class="descclassname">uflash.</code><code class="descname">get_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#get_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.get_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representation of the version information of this project.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.hexlify">
+<code class="descclassname">uflash.</code><code class="descname">hexlify</code><span class="sig-paren">(</span><em>script</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#hexlify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.hexlify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the byte content of a Python script and returns a hex encoded
+version of it.</p>
+<p>Based on the hexlify script in the microbit-micropython repository.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.main">
+<code class="descclassname">uflash.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entry point for the command line tool &#8216;uflash&#8217;.</p>
+<p>Will print help text if the optional first argument is &#8220;help&#8221;. Otherwise
+it will ensure the optional first argument ends in &#8221;.py&#8221; (the source
+Python script).</p>
+<p>An optional second argument is used to reference the path to the micro:bit
+device. Any more arguments are ignored.</p>
+<p>Exceptions are caught and printed for the user.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.save_hex">
+<code class="descclassname">uflash.</code><code class="descname">save_hex</code><span class="sig-paren">(</span><em>hex_file</em>, <em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#save_hex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.save_hex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a string representation of a hex file, copies it to the specified
+path thus causing the device mounted at that point to be flashed.</p>
+<p>If the hex_file is empty it will raise a ValueError.</p>
+<p>If the filename at the end of the path does not end in &#8216;.hex&#8217; it will raise
+a ValueError.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="license">
+<h1>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h1>
+<p>Copyright (c) 2015 Nicholas H.Tollervey and others.</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the &#8220;Software&#8221;), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
 
 
           </div>
@@ -173,20 +244,20 @@ therein.</li>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Contents</a></li>
-<li><a class="reference internal" href="#uflash">uFlash</a><ul>
+<li><a class="reference internal" href="#">uFlash</a><ul>
 <li><a class="reference internal" href="#installation">Installation</a></li>
 <li><a class="reference internal" href="#command-usage">Command Usage</a></li>
 <li><a class="reference internal" href="#development">Development</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#contributing-to-uflash">Contributing to uFlash</a></li>
+<li><a class="reference internal" href="#module-uflash">API</a></li>
+<li><a class="reference internal" href="#license">License</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="" title="next chapter">Contents</a></li>
   </ul></li>
 </ul>
 </div>

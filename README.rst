@@ -1,10 +1,12 @@
 uFlash
 ======
 
-A utility for flashing the BBC micro:bit with Python scripts and the
-MicroPython runtime.
+**THIS MODULE ONLY WORKS WITH PYTHON 3.**
 
-This module provides two services:
+A utility for flashing the BBC micro:bit with Python scripts and the
+MicroPython runtime. You pronounce the name of this utility "micro-flash". ;-)
+
+It provides two services:
 
 1. A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.
 2. A command line utility called `uflash` that will flash Python scripts onto a BBC micro:bit.
@@ -18,8 +20,6 @@ Several essential operations are implemented:
 
 Installation
 ------------
-
-THIS MODULE ONLY WORKS WITH PYTHON 3.
 
 To install simply type::
 

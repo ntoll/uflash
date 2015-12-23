@@ -40,8 +40,8 @@
   <h1>Source code for uflash</h1><div class="highlight"><pre>
 <span class="c"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Code for turning a Python script into a .hex file and flashing it onto a</span>
-<span class="sd">BBC micro:bit.</span>
+<span class="sd">This module contains functions for turning a Python script into a .hex file</span>
+<span class="sd">and flashing it onto a BBC micro:bit.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -71,17 +71,17 @@
 <span class="n">_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../api.html#uflash.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
+<div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../index.html#uflash.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns a string representation of the version information of this project.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">_VERSION</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="hexlify"><a class="viewcode-back" href="../api.html#uflash.hexlify">[docs]</a><span class="k">def</span> <span class="nf">hexlify</span><span class="p">(</span><span class="n">script</span><span class="p">):</span>
+<div class="viewcode-block" id="hexlify"><a class="viewcode-back" href="../index.html#uflash.hexlify">[docs]</a><span class="k">def</span> <span class="nf">hexlify</span><span class="p">(</span><span class="n">script</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes the byte content of a Python script and returns an appropriately</span>
-<span class="sd">    encoded hex version of it.</span>
+<span class="sd">    Takes the byte content of a Python script and returns a hex encoded</span>
+<span class="sd">    version of it.</span>
 
 <span class="sd">    Based on the hexlify script in the microbit-micropython repository.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -110,14 +110,16 @@
     <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="embed_hex"><a class="viewcode-back" href="../api.html#uflash.embed_hex">[docs]</a><span class="k">def</span> <span class="nf">embed_hex</span><span class="p">(</span><span class="n">python_hex</span><span class="p">,</span> <span class="n">runtime_hex</span><span class="p">):</span>
+<div class="viewcode-block" id="embed_hex"><a class="viewcode-back" href="../index.html#uflash.embed_hex">[docs]</a><span class="k">def</span> <span class="nf">embed_hex</span><span class="p">(</span><span class="n">runtime_hex</span><span class="p">,</span> <span class="n">python_hex</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Takes a hex encoded Python fragment and appropriately embeds it into the</span>
-<span class="sd">    referenced MicroPython runtime hex.</span>
+<span class="sd">    Given a string representing the MicroPython runtime hex, will embed a</span>
+<span class="sd">    string representing a hex encoded Python script into it.</span>
 
 <span class="sd">    Returns a string representation of the resulting combination.</span>
 
-<span class="sd">    If the python_hex is empty, will return the unmodified runtime_hex.</span>
+<span class="sd">    Will raise a ValueError if the runtime_hex is missing.</span>
+
+<span class="sd">    If the python_hex is missing, it will return the unmodified runtime_hex.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">runtime_hex</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;MicroPython runtime hex required.&#39;</span><span class="p">)</span>
@@ -134,12 +136,14 @@
     <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">embedded_list</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span></div>
 
 
-<div class="viewcode-block" id="find_microbit"><a class="viewcode-back" href="../api.html#uflash.find_microbit">[docs]</a><span class="k">def</span> <span class="nf">find_microbit</span><span class="p">():</span>
+<div class="viewcode-block" id="find_microbit"><a class="viewcode-back" href="../index.html#uflash.find_microbit">[docs]</a><span class="k">def</span> <span class="nf">find_microbit</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns a path on the filesystem that represents the plugged in BBC</span>
-<span class="sd">    micro:bit to be flashed.</span>
+<span class="sd">    micro:bit that is to be flashed. If no micro:bit is found, it returns</span>
+<span class="sd">    None.</span>
 
-<span class="sd">    Returns None if no micro:bit is found.</span>
+<span class="sd">    Works on Linux, OSX and Windows. Will raise a NotImplementedError</span>
+<span class="sd">    exception if run on any other operating system.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c"># Check what sort of operating system we&#39;re on.</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>
@@ -186,12 +190,15 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;OS not supported.&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="save_hex"><a class="viewcode-back" href="../api.html#uflash.save_hex">[docs]</a><span class="k">def</span> <span class="nf">save_hex</span><span class="p">(</span><span class="n">hex_file</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="save_hex"><a class="viewcode-back" href="../index.html#uflash.save_hex">[docs]</a><span class="k">def</span> <span class="nf">save_hex</span><span class="p">(</span><span class="n">hex_file</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a string representation of a hex file, copies it to the specified</span>
 <span class="sd">    path thus causing the device mounted at that point to be flashed.</span>
 
-<span class="sd">    If the path is not to a .hex file, will raise a ValueError.</span>
+<span class="sd">    If the hex_file is empty it will raise a ValueError.</span>
+
+<span class="sd">    If the filename at the end of the path does not end in &#39;.hex&#39; it will raise</span>
+<span class="sd">    a ValueError.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">hex_file</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot flash an empty .hex file.&#39;</span><span class="p">)</span>
@@ -201,17 +208,18 @@
         <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hex_file</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="flash"><a class="viewcode-back" href="../api.html#uflash.flash">[docs]</a><span class="k">def</span> <span class="nf">flash</span><span class="p">(</span><span class="n">path_to_python</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_to_microbit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="flash"><a class="viewcode-back" href="../index.html#uflash.flash">[docs]</a><span class="k">def</span> <span class="nf">flash</span><span class="p">(</span><span class="n">path_to_python</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_to_microbit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a path to a Python file will attempt to create a hex file and then</span>
-<span class="sd">    flash it onto the microbit.</span>
+<span class="sd">    flash it onto the referenced BBC micro:bit.</span>
 
 <span class="sd">    If the path_to_python is unspecified it will simply flash the unmodified</span>
 <span class="sd">    MicroPython runtime onto the device.</span>
 
 <span class="sd">    If the path_to_microbit is unspecified it will attempt to find the device&#39;s</span>
-<span class="sd">    path automatically. If the automatic discovery fails, then it will raise</span>
-<span class="sd">    an IOError.</span>
+<span class="sd">    path on the filesystem automatically.</span>
+
+<span class="sd">    If the automatic discovery fails, then it will raise an IOError.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c"># Check for the correct version of Python.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">):</span>
@@ -222,7 +230,7 @@
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_python</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">python_script</span><span class="p">:</span>
             <span class="n">python_hex</span> <span class="o">=</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">python_script</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
     <span class="c"># Generate the resulting hex file.</span>
-    <span class="n">micropython_hex</span> <span class="o">=</span> <span class="n">embed_hex</span><span class="p">(</span><span class="n">python_hex</span><span class="p">,</span> <span class="n">_RUNTIME</span><span class="p">)</span>
+    <span class="n">micropython_hex</span> <span class="o">=</span> <span class="n">embed_hex</span><span class="p">(</span><span class="n">_RUNTIME</span><span class="p">,</span> <span class="n">python_hex</span><span class="p">)</span>
     <span class="c"># Find the micro:bit.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path_to_microbit</span><span class="p">:</span>
         <span class="n">path_to_microbit</span> <span class="o">=</span> <span class="n">find_microbit</span><span class="p">()</span>
@@ -235,16 +243,18 @@
         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;Unable to find micro:bit. Is it plugged in?&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../api.html#uflash.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../index.html#uflash.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Entry point for the command line tool &#39;uflash&#39;.</span>
 
 <span class="sd">    Will print help text if the optional first argument is &quot;help&quot;. Otherwise</span>
 <span class="sd">    it will ensure the optional first argument ends in &quot;.py&quot; (the source</span>
-<span class="sd">    Python script). An optional second argument can reference the path to the</span>
-<span class="sd">    micro:bit device. Any more arguments are ignored.</span>
+<span class="sd">    Python script).</span>
 
-<span class="sd">    Exceptions are caught and printed back to the user.</span>
+<span class="sd">    An optional second argument is used to reference the path to the micro:bit</span>
+<span class="sd">    device. Any more arguments are ignored.</span>
+
+<span class="sd">    Exceptions are caught and printed for the user.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">argv</span><span class="p">:</span>
         <span class="n">argv</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
@@ -263,7 +273,7 @@
             <span class="k">elif</span> <span class="n">arg_len</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">flash</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-        <span class="c"># The exception of no return. Respond with something nice to the user.</span>
+        <span class="c"># The exception of no return. Print the exception information.</span>
         <span class="k">print</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span></div>
 
 

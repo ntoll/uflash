@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Code for turning a Python script into a .hex file and flashing it onto a
-BBC micro:bit.
+This module contains functions for turning a Python script into a .hex file
+and flashing it onto a BBC micro:bit.
 """
 import sys
 import os
@@ -28,7 +28,7 @@ will flash the unmodified MicroPython firmware onto the device.
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
-_VERSION = (0, 9, 14, 'beta', 0)
+_VERSION = (0, 9, 15, 'beta', 0)
 
 
 def get_version():
@@ -40,8 +40,8 @@ def get_version():
 
 def hexlify(script):
     """
-    Takes the byte content of a Python script and returns an appropriately
-    encoded hex version of it.
+    Takes the byte content of a Python script and returns a hex encoded
+    version of it.
 
     Based on the hexlify script in the microbit-micropython repository.
     """
@@ -70,14 +70,16 @@ def hexlify(script):
     return '\n'.join(output)
 
 
-def embed_hex(python_hex, runtime_hex):
+def embed_hex(runtime_hex, python_hex=None):
     """
-    Takes a hex encoded Python fragment and appropriately embeds it into the
-    referenced MicroPython runtime hex.
+    Given a string representing the MicroPython runtime hex, will embed a
+    string representing a hex encoded Python script into it.
 
     Returns a string representation of the resulting combination.
 
-    If the python_hex is empty, will return the unmodified runtime_hex.
+    Will raise a ValueError if the runtime_hex is missing.
+
+    If the python_hex is missing, it will return the unmodified runtime_hex.
     """
     if not runtime_hex:
         raise ValueError('MicroPython runtime hex required.')
@@ -97,9 +99,11 @@ def embed_hex(python_hex, runtime_hex):
 def find_microbit():
     """
     Returns a path on the filesystem that represents the plugged in BBC
-    micro:bit to be flashed.
+    micro:bit that is to be flashed. If no micro:bit is found, it returns
+    None.
 
-    Returns None if no micro:bit is found.
+    Works on Linux, OSX and Windows. Will raise a NotImplementedError
+    exception if run on any other operating system.
     """
     # Check what sort of operating system we're on.
     if os.name == 'posix':
@@ -151,7 +155,10 @@ def save_hex(hex_file, path):
     Given a string representation of a hex file, copies it to the specified
     path thus causing the device mounted at that point to be flashed.
 
-    If the path is not to a .hex file, will raise a ValueError.
+    If the hex_file is empty it will raise a ValueError.
+
+    If the filename at the end of the path does not end in '.hex' it will raise
+    a ValueError.
     """
     if not hex_file:
         raise ValueError('Cannot flash an empty .hex file.')
@@ -164,14 +171,15 @@ def save_hex(hex_file, path):
 def flash(path_to_python=None, path_to_microbit=None):
     """
     Given a path to a Python file will attempt to create a hex file and then
-    flash it onto the microbit.
+    flash it onto the referenced BBC micro:bit.
 
     If the path_to_python is unspecified it will simply flash the unmodified
     MicroPython runtime onto the device.
 
     If the path_to_microbit is unspecified it will attempt to find the device's
-    path automatically. If the automatic discovery fails, then it will raise
-    an IOError.
+    path on the filesystem automatically.
+
+    If the automatic discovery fails, then it will raise an IOError.
     """
     # Check for the correct version of Python.
     if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
@@ -182,7 +190,7 @@ def flash(path_to_python=None, path_to_microbit=None):
         with open(path_to_python, 'rb') as python_script:
             python_hex = hexlify(python_script.read())
     # Generate the resulting hex file.
-    micropython_hex = embed_hex(python_hex, _RUNTIME)
+    micropython_hex = embed_hex(_RUNTIME, python_hex)
     # Find the micro:bit.
     if not path_to_microbit:
         path_to_microbit = find_microbit()
@@ -201,10 +209,12 @@ def main(argv=None):
 
     Will print help text if the optional first argument is "help". Otherwise
     it will ensure the optional first argument ends in ".py" (the source
-    Python script). An optional second argument can reference the path to the
-    micro:bit device. Any more arguments are ignored.
+    Python script).
 
-    Exceptions are caught and printed back to the user.
+    An optional second argument is used to reference the path to the micro:bit
+    device. Any more arguments are ignored.
+
+    Exceptions are caught and printed for the user.
     """
     if not argv:
         argv = sys.argv[1:]
@@ -223,7 +233,7 @@ def main(argv=None):
             elif arg_len > 1:
                 flash(argv[0], argv[1])
     except Exception as ex:
-        # The exception of no return. Respond with something nice to the user.
+        # The exception of no return. Print the exception information.
         print(ex)
 
 
