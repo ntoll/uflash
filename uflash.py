@@ -24,6 +24,8 @@ Usage: uflash [path_to_script.py] [path_to_microbit]
 If no path to the micro:bit is provided uflash will attempt to autodetect the
 correct path to the device. If no path to the Python script is provided uflash
 will flash the unmodified MicroPython firmware onto the device.
+
+Documentation can be found here: http://uflash.readthedocs.org/en/latest/
 """
 
 
