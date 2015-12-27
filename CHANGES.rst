@@ -1,6 +1,12 @@
 Release History
 ---------------
 
+0.9.17
+++++++
+
+* Minor code refactor.
+* Documentation update.
+
 0.9.14
 ++++++
 
