@@ -30,7 +30,7 @@ Documentation can be found here: http://uflash.readthedocs.org/en/latest/
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
-_VERSION = (0, 9, 15, 'beta', 0)
+_VERSION = (0, 9, 16, 'beta', 0)
 
 
 def get_version():
