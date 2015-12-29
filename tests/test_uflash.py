@@ -39,6 +39,15 @@ def test_hexlify():
     assert len(lines) == 5
 
 
+def test_unhexlify():
+    """
+    Ensure that we can get the script back out using unhexlify
+    """
+    hexlified = uflash.hexlify(TEST_SCRIPT)
+    unhexlified = uflash.unhexlify(hexlified)
+    assert unhexlified == TEST_SCRIPT
+
+
 def test_hexlify_empty_script():
     """
     The function returns an empty string if the script is empty.
@@ -82,6 +91,32 @@ def test_embed_no_runtime():
     with pytest.raises(ValueError) as ex:
         uflash.embed_hex(None)
     assert ex.value.args[0] == 'MicroPython runtime hex required.'
+
+
+def test_extract():
+    """
+    The script should be returned if there is one
+    """
+    python = uflash.hexlify(TEST_SCRIPT)
+    result = uflash.embed_hex(uflash._RUNTIME, python)
+    extracted = uflash.extract_script(result)
+    assert extracted == TEST_SCRIPT
+
+
+def test_extract_not_valid_hex():
+    """
+    Return a sensible message if the hex file isn't valid
+    """
+    with pytest.raises(ValueError) as e:
+        uflash.extract_script('invalid input')
+    assert 'Bad input hex file' in e.value.args[0]
+
+
+def test_extract_no_python():
+    """
+    What to do here?
+    """
+    assert uflash.extract_script(uflash._RUNTIME) == b''
 
 
 def test_find_microbit_posix_exists():
@@ -278,8 +313,7 @@ def test_main_no_args():
     with mock.patch('sys.argv', ['uflash', ]):
         with mock.patch('uflash.flash') as mock_flash:
             uflash.main()
-            assert mock_flash.call_count == 1
-            assert mock_flash.call_args == ()
+            assert mock_flash.called_once_with(None, None)
 
 
 def test_main_first_arg_python():
@@ -322,11 +356,55 @@ def test_main_two_args():
         assert mock_flash.called_once_with('foo.py', '/media/foo/bar')
 
 
-def test_main_extra_args_ignored():
+def test_extract_command():
     """
-    Any arguments more than two are ignored, with only the first two passed
-    into the flash() function.
+    Test the command-line script extract feature
     """
-    with mock.patch('uflash.flash') as mock_flash:
-        uflash.main(argv=['foo.py', '/media/foo/bar', 'baz', 'quux'])
-        assert mock_flash.called_once_with('foo.py', '/media/foo/bar')
+    with mock.patch('uflash.extract') as mock_extract:
+        uflash.main(argv=['-e', 'hex.hex', 'foo.py'])
+        assert mock_extract.called_once_with('hex.hex', 'foo.py')
+
+
+def test_extract_paths():
+    """
+    Test the different paths of the extract() function.
+    It should open and extract the contents of the file (input arg)
+    When called with only an input it should print the output of extract_script
+    When called with two arguments it should write the output to the output arg
+    """
+    mock_e = mock.MagicMock(return_value=mock.sentinel.script)
+    mock_o = mock.MagicMock()
+    mock_o.return_value.__enter__ = lambda s: s
+    mock_o.return_value.__exit__ = mock.Mock()
+    mock_o.return_value.read.return_value = 'script'
+    mock_o.return_value.write = mock.Mock()
+
+    with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
+            mock.patch('builtins.print') as mock_print, \
+            mock.patch('builtins.open', mock_o) as mock_open:
+        uflash.extract('foo.hex')
+        assert mock_open.called_once_with('foo.hex')
+        assert mock_extract_script.called_once_with(mock.sentinel.file_handle)
+        assert mock_print.called_once_with(mock.sentinel.script)
+
+        uflash.extract('foo.hex', 'out.py')
+        assert mock_open.call_count == 3
+        assert mock_open.called_with('out.py', 'w')
+        assert mock_open.return_value.write.call_count == 1
+
+
+def test_extract_command_source_only():
+    """
+    If there is no target file the extract command should write to stdout
+    """
+    with mock.patch('uflash.extract') as mock_extract:
+        uflash.main(argv=['hex.hex'])
+        assert mock_extract.called_once_with('hex.hex')
+
+
+def test_extract_command_no_source():
+    """
+    If there is no source file the extract command should complain
+    """
+    with pytest.raises(TypeError):
+        uflash.extract(None, None)
