@@ -41,11 +41,12 @@ def test_hexlify():
 
 def test_unhexlify():
     """
-    Ensure that we can get the script back out using unhexlify
+    Ensure that we can get the script back out using unhexlify and that the
+    result is a properly decoded string.
     """
     hexlified = uflash.hexlify(TEST_SCRIPT)
     unhexlified = uflash.unhexlify(hexlified)
-    assert unhexlified == TEST_SCRIPT
+    assert unhexlified == TEST_SCRIPT.decode('utf-8')
 
 
 def test_hexlify_empty_script():
@@ -95,12 +96,12 @@ def test_embed_no_runtime():
 
 def test_extract():
     """
-    The script should be returned if there is one
+    The script should be returned as a string (if there is one).
     """
     python = uflash.hexlify(TEST_SCRIPT)
     result = uflash.embed_hex(uflash._RUNTIME, python)
     extracted = uflash.extract_script(result)
-    assert extracted == TEST_SCRIPT
+    assert extracted == TEST_SCRIPT.decode('utf-8')
 
 
 def test_extract_not_valid_hex():
@@ -116,7 +117,7 @@ def test_extract_no_python():
     """
     What to do here?
     """
-    assert uflash.extract_script(uflash._RUNTIME) == b''
+    assert uflash.extract_script(uflash._RUNTIME) == ''
 
 
 def test_find_microbit_posix_exists():
@@ -372,7 +373,7 @@ def test_extract_paths():
     When called with only an input it should print the output of extract_script
     When called with two arguments it should write the output to the output arg
     """
-    mock_e = mock.MagicMock(return_value=mock.sentinel.script)
+    mock_e = mock.MagicMock(return_value=b'print("hello, world!")')
     mock_o = mock.MagicMock()
     mock_o.return_value.__enter__ = lambda s: s
     mock_o.return_value.__exit__ = mock.Mock()

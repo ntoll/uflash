@@ -18,18 +18,19 @@ _SCRIPT_ADDR = 0x3e000
 
 #: The help text to be shown when requested.
 _HELP_TEXT = """
-Flash Python onto the BBC micro:bit
+Flash Python onto the BBC micro:bit or extract Python from a .hex file.
 
 If no path to the micro:bit is provided uflash will attempt to autodetect the
 correct path to the device. If no path to the Python script is provided uflash
-will flash the unmodified MicroPython firmware onto the device.
+will flash the unmodified MicroPython firmware onto the device. Use the -e flag
+to recover a Python script from a hex file.
 
 Documentation can be found here: http://uflash.readthedocs.org/en/latest/
 """
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
-_VERSION = (0, 9, 17, 'beta', 0)
+_VERSION = (0, 9, 18, 'beta', 0)
 
 
 def get_version():
@@ -73,7 +74,7 @@ def hexlify(script):
 
 def unhexlify(blob):
     """
-    Takes a hexlified script and turns it back into Python code.
+    Takes a hexlified script and turns it back into a string of Python code.
     """
     lines = blob.split('\n')[1:]
     output = []
@@ -85,7 +86,7 @@ def unhexlify(blob):
     # and strip any null bytes from the end
     output[-1] = output[-1].strip(b'\x00')
     script = b''.join(output)
-    return script
+    return script.decode('utf-8')
 
 
 def embed_hex(runtime_hex, python_hex=None):
@@ -117,7 +118,7 @@ def embed_hex(runtime_hex, python_hex=None):
 def extract_script(embedded_hex):
     """
     Given a hex file containing the MicroPython runtime and an embedded Python
-    script, will extract the original script.
+    script, will extract the original Python script.
 
     Returns a string containing the original embedded script.
     """
@@ -131,7 +132,7 @@ def extract_script(embedded_hex):
     blob = '\n'.join(hex_lines[start_line:-3])
     if blob == '':
         # If the result is the empty string, there was no embedded script
-        return b''
+        return ''
     # Pass the extracted hex through unhexlify
     return unhexlify(blob)
 
@@ -182,8 +183,9 @@ def find_microbit():
 
 def save_hex(hex_file, path):
     """
-    Given a string representation of a hex file, copies it to the specified
-    path thus causing the device mounted at that point to be flashed.
+    Given a string representation of a hex file, this function copies it to
+    the specified path thus causing the device mounted at that point to be
+    flashed.
 
     If the hex_file is empty it will raise a ValueError.
 
@@ -235,10 +237,10 @@ def flash(path_to_python=None, path_to_microbit=None):
         raise IOError('Unable to find micro:bit. Is it plugged in?')
 
 
-def extract(path_to_hex=None, output_path=None):
+def extract(path_to_hex, output_path=None):
     """
-    Given a hex file this function will attempt to extract the embedded script
-    from it and save it either to output_path or stdout
+    Given a path_to_hex file this function will attempt to extract the
+    embedded script from it and save it either to output_path or stdout
     """
     with open(path_to_hex, 'r') as hex_file:
         python_script = extract_script(hex_file.read())
@@ -246,7 +248,7 @@ def extract(path_to_hex=None, output_path=None):
             with open(output_path, 'w') as output_file:
                 output_file.write(python_script)
         else:
-            print(python_script.decode('utf-8'))
+            print(python_script)
 
 
 def main(argv=None):
