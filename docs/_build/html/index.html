@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uFlash &mdash; uFlash 0.9.17.beta.0 documentation</title>
+    <title>uFlash &mdash; uFlash 0.9.18.beta.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.17.beta.0',
+        VERSION:     '0.9.18.beta.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="uFlash 0.9.17.beta.0 documentation" href="#" />
+    <link rel="top" title="uFlash 0.9.18.beta.0 documentation" href="#" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -50,6 +50,7 @@ MicroPython runtime. You pronounce the name of this utility &#8220;micro-flash&#
 <ul class="simple">
 <li>Encode Python into the hex format.</li>
 <li>Embed the resulting hexified Python into the MicroPython runtime hex.</li>
+<li>Extract an encoded Python script from a MicroPython hex file.</li>
 <li>Discover the connected micro:bit.</li>
 <li>Copy the resulting hex onto the micro:bit, thus flashing the device.</li>
 </ul>
@@ -93,6 +94,13 @@ second argument to the command:</p>
 Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 </pre></div>
 </div>
+<p>To extract a Python script from a hex file use the &#8220;-e&#8221; flag like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ uflash -e something.hex myscript.py
+</pre></div>
+</div>
+<p>This will save the Python script recovered from &#8220;something.hex&#8221; into the file
+&#8220;myscript.py&#8221;. If you don&#8217;t supply a target the recovered script will emit to
+stdout.</p>
 </div>
 <div class="section" id="development">
 <h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
@@ -176,6 +184,21 @@ string representing a hex encoded Python script into it.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="uflash.extract">
+<code class="descclassname">uflash.</code><code class="descname">extract</code><span class="sig-paren">(</span><em>path_to_hex</em>, <em>output_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path_to_hex file this function will attempt to extract the
+embedded script from it and save it either to output_path or stdout</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.extract_script">
+<code class="descclassname">uflash.</code><code class="descname">extract_script</code><span class="sig-paren">(</span><em>embedded_hex</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#extract_script"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.extract_script" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a hex file containing the MicroPython runtime and an embedded Python
+script, will extract the original Python script.</p>
+<p>Returns a string containing the original embedded script.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="uflash.find_microbit">
 <code class="descclassname">uflash.</code><code class="descname">find_microbit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#find_microbit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.find_microbit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a path on the filesystem that represents the plugged in BBC
@@ -226,11 +249,18 @@ device. Any more arguments are ignored.</p>
 <dl class="function">
 <dt id="uflash.save_hex">
 <code class="descclassname">uflash.</code><code class="descname">save_hex</code><span class="sig-paren">(</span><em>hex_file</em>, <em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#save_hex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.save_hex" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a string representation of a hex file, copies it to the specified
-path thus causing the device mounted at that point to be flashed.</p>
+<dd><p>Given a string representation of a hex file, this function copies it to
+the specified path thus causing the device mounted at that point to be
+flashed.</p>
 <p>If the hex_file is empty it will raise a ValueError.</p>
 <p>If the filename at the end of the path does not end in &#8216;.hex&#8217; it will raise
 a ValueError.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="uflash.unhexlify">
+<code class="descclassname">uflash.</code><code class="descname">unhexlify</code><span class="sig-paren">(</span><em>blob</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/uflash.html#unhexlify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#uflash.unhexlify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a hexlified script and turns it back into a string of Python code.</p>
 </dd></dl>
 
 </div>

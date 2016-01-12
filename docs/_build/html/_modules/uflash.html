@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uflash &mdash; uFlash 0.9.17.beta.0 documentation</title>
+    <title>uflash &mdash; uFlash 0.9.18.beta.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.9.17.beta.0',
+        VERSION:     '0.9.18.beta.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="uFlash 0.9.17.beta.0 documentation" href="../index.html" />
+    <link rel="top" title="uFlash 0.9.18.beta.0 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" />
    
   
@@ -43,6 +43,7 @@
 <span class="sd">This module contains functions for turning a Python script into a .hex file</span>
 <span class="sd">and flashing it onto a BBC micro:bit.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">struct</span>
@@ -57,20 +58,19 @@
 
 <span class="c">#: The help text to be shown when requested.</span>
 <span class="n">_HELP_TEXT</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
-<span class="s">Flash Python onto the BBC micro:bit</span>
-
-<span class="s">Usage: uflash [path_to_script.py] [path_to_microbit]</span>
+<span class="s">Flash Python onto the BBC micro:bit or extract Python from a .hex file.</span>
 
 <span class="s">If no path to the micro:bit is provided uflash will attempt to autodetect the</span>
 <span class="s">correct path to the device. If no path to the Python script is provided uflash</span>
-<span class="s">will flash the unmodified MicroPython firmware onto the device.</span>
+<span class="s">will flash the unmodified MicroPython firmware onto the device. Use the -e flag</span>
+<span class="s">to recover a Python script from a hex file.</span>
 
 <span class="s">Documentation can be found here: http://uflash.readthedocs.org/en/latest/</span>
 <span class="s">&quot;&quot;&quot;</span>
 
 
 <span class="c">#: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION</span>
-<span class="n">_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../index.html#uflash.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
@@ -112,6 +112,23 @@
     <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="unhexlify"><a class="viewcode-back" href="../index.html#uflash.unhexlify">[docs]</a><span class="k">def</span> <span class="nf">unhexlify</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes a hexlified script and turns it back into a string of Python code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">blob</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="c"># Discard the address, length etc. and reverse the hexlification</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">9</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span>
+    <span class="c"># Strip off &quot;MP&lt;size&gt;&quot; from the start</span>
+    <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="c"># and strip any null bytes from the end</span>
+    <span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;</span><span class="se">\x00</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">script</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="embed_hex"><a class="viewcode-back" href="../index.html#uflash.embed_hex">[docs]</a><span class="k">def</span> <span class="nf">embed_hex</span><span class="p">(</span><span class="n">runtime_hex</span><span class="p">,</span> <span class="n">python_hex</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a string representing the MicroPython runtime hex, will embed a</span>
@@ -136,6 +153,28 @@
     <span class="n">embedded_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">py_list</span><span class="p">)</span>
     <span class="n">embedded_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">runtime_list</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
     <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">embedded_list</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span></div>
+
+
+<div class="viewcode-block" id="extract_script"><a class="viewcode-back" href="../index.html#uflash.extract_script">[docs]</a><span class="k">def</span> <span class="nf">extract_script</span><span class="p">(</span><span class="n">embedded_hex</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a hex file containing the MicroPython runtime and an embedded Python</span>
+<span class="sd">    script, will extract the original Python script.</span>
+
+<span class="sd">    Returns a string containing the original embedded script.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hex_lines</span> <span class="o">=</span> <span class="n">embedded_hex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="c"># Find the marker in the hex that comes just before the script</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">start_line</span> <span class="o">=</span> <span class="n">hex_lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;:08058000193901005D150000AE&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Bad input hex file:&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="c"># Recombine the lines after that, but leave out the last 3 lines</span>
+    <span class="n">blob</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hex_lines</span><span class="p">[</span><span class="n">start_line</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">blob</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+        <span class="c"># If the result is the empty string, there was no embedded script</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span>
+    <span class="c"># Pass the extracted hex through unhexlify</span>
+    <span class="k">return</span> <span class="n">unhexlify</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="find_microbit"><a class="viewcode-back" href="../index.html#uflash.find_microbit">[docs]</a><span class="k">def</span> <span class="nf">find_microbit</span><span class="p">():</span>
@@ -184,8 +223,9 @@
 
 <div class="viewcode-block" id="save_hex"><a class="viewcode-back" href="../index.html#uflash.save_hex">[docs]</a><span class="k">def</span> <span class="nf">save_hex</span><span class="p">(</span><span class="n">hex_file</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Given a string representation of a hex file, copies it to the specified</span>
-<span class="sd">    path thus causing the device mounted at that point to be flashed.</span>
+<span class="sd">    Given a string representation of a hex file, this function copies it to</span>
+<span class="sd">    the specified path thus causing the device mounted at that point to be</span>
+<span class="sd">    flashed.</span>
 
 <span class="sd">    If the hex_file is empty it will raise a ValueError.</span>
 
@@ -219,6 +259,8 @@
     <span class="c"># Grab the Python script (if needed).</span>
     <span class="n">python_hex</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
     <span class="k">if</span> <span class="n">path_to_python</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path_to_python</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.py&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Python files must end in &quot;.py&quot;.&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_python</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">python_script</span><span class="p">:</span>
             <span class="n">python_hex</span> <span class="o">=</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">python_script</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
     <span class="c"># Generate the resulting hex file.</span>
@@ -233,6 +275,20 @@
         <span class="n">save_hex</span><span class="p">(</span><span class="n">micropython_hex</span><span class="p">,</span> <span class="n">hex_file</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;Unable to find micro:bit. Is it plugged in?&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="extract"><a class="viewcode-back" href="../index.html#uflash.extract">[docs]</a><span class="k">def</span> <span class="nf">extract</span><span class="p">(</span><span class="n">path_to_hex</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a path_to_hex file this function will attempt to extract the</span>
+<span class="sd">    embedded script from it and save it either to output_path or stdout</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_hex</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hex_file</span><span class="p">:</span>
+        <span class="n">python_script</span> <span class="o">=</span> <span class="n">extract_script</span><span class="p">(</span><span class="n">hex_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+                <span class="n">output_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">python_script</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">python_script</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../index.html#uflash.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -250,20 +306,21 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">argv</span><span class="p">:</span>
         <span class="n">argv</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="n">arg_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">arg_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">flash</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">arg_len</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;help&#39;</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="n">_HELP_TEXT</span><span class="p">)</span>
-                <span class="k">return</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.py&#39;</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Python files must end in &quot;.py&quot;.&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">arg_len</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">flash</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">elif</span> <span class="n">arg_len</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">flash</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="n">_HELP_TEXT</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s">&#39;?&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;target&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s">&#39;?&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;-e&#39;</span><span class="p">,</span> <span class="s">&#39;--extract&#39;</span><span class="p">,</span>
+                            <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Extract python source from a hex file</span>
+<span class="s">                            instead of creating the hex file&quot;&quot;&quot;</span><span class="p">,</span>
+                            <span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">extract</span><span class="p">:</span>
+            <span class="n">extract</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flash</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="c"># The exception of no return. Print the exception information.</span>
         <span class="k">print</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span></div>
