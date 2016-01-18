@@ -141,7 +141,7 @@ def test_find_microbit_posix_missing():
         fixture = fixture_file.read()
         with mock.patch('os.name', 'posix'):
             with mock.patch('uflash.check_output', return_value=fixture):
-                assert uflash.find_microbit() == None
+                assert uflash.find_microbit() is None
 
 
 def test_find_microbit_nt_exists():
@@ -177,7 +177,7 @@ def test_find_microbit_nt_missing():
             with mock.patch('ctypes.create_unicode_buffer',
                             return_value=return_value):
                 ctypes.windll = mock_windll
-                assert uflash.find_microbit() == None
+                assert uflash.find_microbit() is None
 
 
 def test_find_microbit_unknown_os():
