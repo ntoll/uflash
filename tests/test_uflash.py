@@ -4,12 +4,23 @@ Tests for the uflash module.
 """
 import tempfile
 import os
+import sys
 import os.path
 import ctypes
-from unittest import mock
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import pytest
 import uflash
+
+
+if sys.version_info.major == 2:
+    import __builtin__ as builtins
+else:
+    import builtins
 
 
 TEST_SCRIPT = b"""from microbit import *
@@ -300,10 +311,11 @@ def test_flash_wrong_python():
     Ensures a call to flash will fail if it's not reported that we're using
     Python 3.
     """
-    with mock.patch('sys.version_info', (2, 7, 9)):
-        with pytest.raises(RuntimeError) as ex:
-            uflash.flash()
-    assert ex.value.args[0] == 'Will only run on Python 3.3 or later.'
+    for version in [(2, 6, 3), (3, 2, 0)]:
+        with mock.patch('sys.version_info', version):
+            with pytest.raises(RuntimeError) as ex:
+                uflash.flash()
+            assert 'Will only run on Python ' in ex.value.args[0]
 
 
 def test_main_no_args():
@@ -331,7 +343,7 @@ def test_main_first_arg_help():
     """
     If there is a single argument of "help", it prints some help.
     """
-    with mock.patch('builtins.print') as mock_print:
+    with mock.patch.object(builtins, 'print') as mock_print:
         uflash.main(argv=['help'])
         assert mock_print.called_once_with(uflash._HELP_TEXT)
 
@@ -341,7 +353,7 @@ def test_main_first_arg_not_python():
     If the first argument does not end in ".py" then it should display a useful
     error message.
     """
-    with mock.patch('builtins.print') as mock_print:
+    with mock.patch.object(builtins, 'print') as mock_print:
         uflash.main(argv=['foo.bar'])
         expected = ValueError('Python files must end in ".py".')
         assert mock_print.called_once_with(expected)
@@ -381,8 +393,8 @@ def test_extract_paths():
     mock_o.return_value.write = mock.Mock()
 
     with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
-            mock.patch('builtins.print') as mock_print, \
-            mock.patch('builtins.open', mock_o) as mock_open:
+            mock.patch.object(builtins, 'print') as mock_print, \
+            mock.patch.object(builtins, 'open', mock_o) as mock_open:
         uflash.extract('foo.hex')
         assert mock_open.called_once_with('foo.hex')
         assert mock_extract_script.called_once_with(mock.sentinel.file_handle)
