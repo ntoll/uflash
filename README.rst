@@ -1,7 +1,7 @@
 uFlash
 ======
 
-**THIS MODULE ONLY WORKS WITH PYTHON 3.**
+**THIS MODULE ONLY WORKS WITH PYTHON 2.7 or 3.3+.**
 
 A utility for flashing the BBC micro:bit with Python scripts and the
 MicroPython runtime. You pronounce the name of this utility "micro-flash". ;-)
