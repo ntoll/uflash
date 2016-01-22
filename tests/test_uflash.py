@@ -119,14 +119,13 @@ def test_extract_not_valid_hex():
     """
     Return a sensible message if the hex file isn't valid
     """
-    with pytest.raises(ValueError) as e:
-        uflash.extract_script('invalid input')
-    assert 'Bad input hex file' in e.value.args[0]
+    assert uflash.extract_script('invalid input') == ''
 
 
 def test_extract_no_python():
     """
-    What to do here?
+    Ensure that if there's no Python in the input hex then just return an empty
+    (False) string.
     """
     assert uflash.extract_script(uflash._RUNTIME) == ''
 

@@ -13,6 +13,8 @@ API
 .. automodule:: uflash
     :members:
 
+.. include:: ../CHANGES.rst
+
 License
 =======
 
