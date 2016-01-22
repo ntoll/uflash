@@ -1,7 +1,7 @@
 Release History
 ===============
 
-1.0.0.beta.0
+1.0.0.beta.1
 ------------
 
 * Works with Python 2.7 (thanks to @Funkyhat).
