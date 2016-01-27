@@ -40,11 +40,11 @@ def get_version():
     return '.'.join([str(i) for i in _VERSION])
 
 
-def strfunc(s):
+def strfunc(raw):
     """
     Compatibility for 2 & 3 str()
     """
-    return str(s) if sys.version_info[0] == 2 else str(s, 'utf-8')
+    return str(raw) if sys.version_info[0] == 2 else str(raw, 'utf-8')
 
 
 def hexlify(script):
@@ -289,7 +289,7 @@ def main(argv=None):
                             action='store_true',
                             help="""Extract python source from a hex file
                             instead of creating the hex file""",
-                            )
+                           )
         args = parser.parse_args(argv)
 
         if args.extract:
