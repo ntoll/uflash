@@ -214,7 +214,7 @@ def save_hex(hex_file, path):
         output.write(hex_file.encode('ascii'))
 
 
-def flash(path_to_python=None, path_to_microbit=None):
+def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
     """
     Given a path to a Python file will attempt to create a hex file and then
     flash it onto the referenced BBC micro:bit.
@@ -224,6 +224,10 @@ def flash(path_to_python=None, path_to_microbit=None):
 
     If the path_to_microbit is unspecified it will attempt to find the device's
     path on the filesystem automatically.
+
+    If the path_to_runtime is unspecified it will use the built in version of
+    the MicroPython runtime. This feature is useful if a custom build of
+    MicroPython is available.
 
     If the automatic discovery fails, then it will raise an IOError.
     """
@@ -243,6 +247,7 @@ def flash(path_to_python=None, path_to_microbit=None):
     # Find the micro:bit.
     if not path_to_microbit:
         path_to_microbit = find_microbit()
+    raise NotImplemented('Path to hex')
     # Attempt to write the hex file to the micro:bit.
     if path_to_microbit:
         hex_file = os.path.join(path_to_microbit, 'micropython.hex')
@@ -285,6 +290,7 @@ def main(argv=None):
         parser = argparse.ArgumentParser(description=_HELP_TEXT)
         parser.add_argument('source', nargs='?', default=None)
         parser.add_argument('target', nargs='?', default=None)
+        parser.add_argument('runtime', nargs='?', default=None)
         parser.add_argument('-e', '--extract',
                             action='store_true',
                             help="""Extract python source from a hex file
@@ -294,7 +300,7 @@ def main(argv=None):
         if args.extract:
             extract(args.source, args.target)
         else:
-            flash(args.source, args.target)
+            flash(args.source, args.target, args.runtime)
     except Exception as ex:
         # The exception of no return. Print the exception information.
         print(ex)
