@@ -1,6 +1,23 @@
 Release History
 ===============
 
+1.0.0.beta.4
+------------
+
+* Documentation update.
+* Help text update.
+
+1.0.0.beta.3
+------------
+
+* Add ability to specify a MicroPython runtime to use.
+* Test fixes.
+
+1.0.0.beta.2
+------------
+
+* Updated to latest version of MicroPython runtime.
+
 1.0.0.beta.1
 ------------
 

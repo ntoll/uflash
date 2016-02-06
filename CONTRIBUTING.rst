@@ -30,5 +30,5 @@ Checklist
 * If your contribution is for a major block of work and you've not done so
   already, add yourself to the AUTHORS file following the convention found
   therein.
-* Try to include tests!
+* You MUST include tests. We have 100% test coverage.
 * Have fun!

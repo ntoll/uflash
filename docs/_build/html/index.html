@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uFlash &mdash; uFlash 1.0.0.beta.3 documentation</title>
+    <title>uFlash &mdash; uFlash 1.0.0.beta.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.0.beta.3',
+        VERSION:     '1.0.0.beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="uFlash 1.0.0.beta.3 documentation" href="#" />
+    <link rel="top" title="uFlash 1.0.0.beta.4 documentation" href="#" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -53,6 +53,7 @@ MicroPython runtime. You pronounce the name of this utility &#8220;micro-flash&#
 <li>Extract an encoded Python script from a MicroPython hex file.</li>
 <li>Discover the connected micro:bit.</li>
 <li>Copy the resulting hex onto the micro:bit, thus flashing the device.</li>
+<li>Specify the MicroPython runtime hex in which to embed your Python code.</li>
 </ul>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
@@ -69,12 +70,16 @@ latest version, use the following command:</p>
 <div class="section" id="command-usage">
 <h2>Command Usage<a class="headerlink" href="#command-usage" title="Permalink to this headline">¶</a></h2>
 <p>To read help simply type:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ uflash help
+<div class="highlight-python"><div class="highlight"><pre>$ uflash --help
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ uflash -h
 </pre></div>
 </div>
 <p>If you type the command on its own then uflash will attempt to find a connected
-BBC micro:bit and flash an unmodified version of the MicroPython runtime onto
-it:</p>
+BBC micro:bit and flash an unmodified default version of the MicroPython
+runtime onto it:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ uflash
 Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 </pre></div>
@@ -101,6 +106,16 @@ Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 <p>This will save the Python script recovered from &#8220;something.hex&#8221; into the file
 &#8220;myscript.py&#8221;. If you don&#8217;t supply a target the recovered script will emit to
 stdout.</p>
+<p>If you&#8217;re developing MicroPython and have a custom runtime hex file you can
+specify that uflash use it instead of the built-in version of MicroPython in
+the following way:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ uflash -r firmware.hex
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ uflash --runtime=firmware.hex
+</pre></div>
+</div>
 </div>
 <div class="section" id="development">
 <h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
@@ -165,7 +180,7 @@ yet robust argument is most welcome.</p>
 <li>If your contribution is for a major block of work and you&#8217;ve not done so
 already, add yourself to the AUTHORS file following the convention found
 therein.</li>
-<li>Try to include tests!</li>
+<li>You MUST include tests. We have 100% test coverage.</li>
 <li>Have fun!</li>
 </ul>
 </div>
@@ -275,6 +290,26 @@ a ValueError.</p>
 </div>
 <div class="section" id="release-history">
 <h1>Release History<a class="headerlink" href="#release-history" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="beta-4">
+<h2>1.0.0.beta.4<a class="headerlink" href="#beta-4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Documentation update.</li>
+<li>Help text update.</li>
+</ul>
+</div>
+<div class="section" id="beta-3">
+<h2>1.0.0.beta.3<a class="headerlink" href="#beta-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Add ability to specify a MicroPython runtime to use.</li>
+<li>Test fixes.</li>
+</ul>
+</div>
+<div class="section" id="beta-2">
+<h2>1.0.0.beta.2<a class="headerlink" href="#beta-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Updated to latest version of MicroPython runtime.</li>
+</ul>
+</div>
 <div class="section" id="beta-1">
 <h2>1.0.0.beta.1<a class="headerlink" href="#beta-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -343,6 +378,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 <li><a class="reference internal" href="#contributing-to-uflash">Contributing to uFlash</a></li>
 <li><a class="reference internal" href="#module-uflash">API</a></li>
 <li><a class="reference internal" href="#release-history">Release History</a><ul>
+<li><a class="reference internal" href="#beta-4">1.0.0.beta.4</a></li>
+<li><a class="reference internal" href="#beta-3">1.0.0.beta.3</a></li>
+<li><a class="reference internal" href="#beta-2">1.0.0.beta.2</a></li>
 <li><a class="reference internal" href="#beta-1">1.0.0.beta.1</a></li>
 <li><a class="reference internal" href="#id1">0.9.17</a></li>
 <li><a class="reference internal" href="#id2">0.9.14</a></li>

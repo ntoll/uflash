@@ -18,6 +18,7 @@ Several essential operations are implemented:
 * Extract an encoded Python script from a MicroPython hex file.
 * Discover the connected micro:bit.
 * Copy the resulting hex onto the micro:bit, thus flashing the device.
+* Specify the MicroPython runtime hex in which to embed your Python code.
 
 Installation
 ------------
@@ -36,11 +37,15 @@ Command Usage
 
 To read help simply type::
 
-    $ uflash help
+    $ uflash --help
+
+or::
+
+    $ uflash -h
 
 If you type the command on its own then uflash will attempt to find a connected
-BBC micro:bit and flash an unmodified version of the MicroPython runtime onto
-it::
+BBC micro:bit and flash an unmodified default version of the MicroPython
+runtime onto it::
 
     $ uflash
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
@@ -67,6 +72,16 @@ To extract a Python script from a hex file use the "-e" flag like this::
 This will save the Python script recovered from "something.hex" into the file
 "myscript.py". If you don't supply a target the recovered script will emit to
 stdout.
+
+If you're developing MicroPython and have a custom runtime hex file you can
+specify that uflash use it instead of the built-in version of MicroPython in
+the following way::
+
+    $ uflash -r firmware.hex
+
+or::
+
+    $ uflash --runtime=firmware.hex
 
 Development
 -----------
