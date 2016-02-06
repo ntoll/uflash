@@ -276,7 +276,7 @@ def test_flash_has_python_no_path_to_microbit():
             assert mock_save.call_args[0][1] == expected_path
 
 
-def test_flash_with_paths():
+def test_flash_with_path_to_microbit():
     """
     Flash the referenced path to the micro:bit with a hex file generated from
     the MicroPython firmware and the referenced Python script.
@@ -292,6 +292,27 @@ def test_flash_with_paths():
         assert mock_save.call_args[0][0] == expected_hex
         expected_path = os.path.join('test_path', 'micropython.hex')
         assert mock_save.call_args[0][1] == expected_path
+
+
+def test_flash_with_path_to_runtime():
+    """
+    Use the referenced runtime hex file when building the hex file to be
+    flashed onto the device.
+    """
+    mock_o = mock.MagicMock()
+    mock_o.return_value.__enter__ = lambda s: s
+    mock_o.return_value.__exit__ = mock.Mock()
+    mock_o.return_value.read.return_value = 'script'
+    with mock.patch.object(builtins, 'open', mock_o) as mock_open:
+        with mock.patch('uflash.embed_hex', return_value='foo') as em_h:
+            with mock.patch('uflash.find_microbit', return_value='bar'):
+                with mock.patch('uflash.save_hex') as mock_save:
+                    uflash.flash('tests/example.py',
+                                 path_to_runtime='tests/fake.hex')
+                    assert mock_open.call_args[0][0] == 'tests/fake.hex'
+                    assert em_h.call_args[0][0] == 'script'
+                    mock_save.assert_called_once_with('foo',
+                                                      'bar/micropython.hex')
 
 
 def test_flash_cannot_find_microbit():
@@ -325,7 +346,9 @@ def test_main_no_args():
     with mock.patch('sys.argv', ['uflash', ]):
         with mock.patch('uflash.flash') as mock_flash:
             uflash.main()
-            assert mock_flash.called_once_with(None, None)
+            mock_flash.assert_called_once_with(path_to_python=None,
+                                               path_to_microbit=None,
+                                               path_to_runtime=None)
 
 
 def test_main_first_arg_python():
@@ -335,16 +358,18 @@ def test_main_first_arg_python():
     """
     with mock.patch('uflash.flash') as mock_flash:
         uflash.main(argv=['foo.py'])
-        assert mock_flash.called_once_with('foo.py')
+        mock_flash.assert_called_once_with(path_to_python='foo.py',
+                                           path_to_microbit=None,
+                                           path_to_runtime=None)
 
 
 def test_main_first_arg_help():
     """
-    If there is a single argument of "help", it prints some help.
+    If there is a single argument of "--help", it prints some help.
     """
-    with mock.patch.object(builtins, 'print') as mock_print:
-        uflash.main(argv=['help'])
-        assert mock_print.called_once_with(uflash._HELP_TEXT)
+    with mock.patch('uflash.argparse.ArgumentParser') as mock_ap:
+        uflash.main(argv=['--help'])
+        mock_ap.assert_called_once_with(description=uflash._HELP_TEXT)
 
 
 def test_main_first_arg_not_python():
@@ -354,8 +379,9 @@ def test_main_first_arg_not_python():
     """
     with mock.patch.object(builtins, 'print') as mock_print:
         uflash.main(argv=['foo.bar'])
-        expected = ValueError('Python files must end in ".py".')
-        assert mock_print.called_once_with(expected)
+        error = mock_print.call_args[0][0]
+        assert isinstance(error, ValueError)
+        assert error.args[0] == 'Python files must end in ".py".'
 
 
 def test_main_two_args():
@@ -363,9 +389,34 @@ def test_main_two_args():
     If there are two arguments passed into main, then it should pass them onto
     the flash() function.
     """
-    with mock.patch('uflash.flash') as mock_flash:
+    with mock.patch('uflash.flash', return_value=None) as mock_flash:
         uflash.main(argv=['foo.py', '/media/foo/bar'])
-        assert mock_flash.called_once_with('foo.py', '/media/foo/bar')
+        mock_flash.assert_called_once_with(path_to_python='foo.py',
+                                           path_to_microbit='/media/foo/bar',
+                                           path_to_runtime=None)
+
+
+def test_main_runtime():
+    """
+    If there are three arguments passed into main, then it should pass them
+    onto the flash() function.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['-r' 'baz.hex', 'foo.py', '/media/foo/bar'])
+        mock_flash.assert_called_once_with(path_to_python='foo.py',
+                                           path_to_microbit='/media/foo/bar',
+                                           path_to_runtime='baz.hex')
+
+
+def test_main_named_args():
+    """
+    Ensure that named arguments are passed on properly to the flash() function.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['-r', 'baz.hex'])
+        mock_flash.assert_called_once_with(path_to_python=None,
+                                           path_to_microbit=None,
+                                           path_to_runtime='baz.hex')
 
 
 def test_extract_command():
@@ -374,7 +425,7 @@ def test_extract_command():
     """
     with mock.patch('uflash.extract') as mock_extract:
         uflash.main(argv=['-e', 'hex.hex', 'foo.py'])
-        assert mock_extract.called_once_with('hex.hex', 'foo.py')
+        mock_extract.assert_called_once_with('hex.hex', 'foo.py')
 
 
 def test_extract_paths():
@@ -395,9 +446,9 @@ def test_extract_paths():
             mock.patch.object(builtins, 'print') as mock_print, \
             mock.patch.object(builtins, 'open', mock_o) as mock_open:
         uflash.extract('foo.hex')
-        assert mock_open.called_once_with('foo.hex')
-        assert mock_extract_script.called_once_with(mock.sentinel.file_handle)
-        assert mock_print.called_once_with(mock.sentinel.script)
+        mock_open.assert_called_once_with('foo.hex', 'r')
+        mock_extract_script.assert_called_once_with('script')
+        mock_print.assert_called_once_with(b'print("hello, world!")')
 
         uflash.extract('foo.hex', 'out.py')
         assert mock_open.call_count == 3
@@ -407,11 +458,21 @@ def test_extract_paths():
 
 def test_extract_command_source_only():
     """
-    If there is no target file the extract command should write to stdout
+    If there is no target file the extract command should write to stdout.
     """
-    with mock.patch('uflash.extract') as mock_extract:
-        uflash.main(argv=['hex.hex'])
-        assert mock_extract.called_once_with('hex.hex')
+    mock_e = mock.MagicMock(return_value=b'print("hello, world!")')
+    mock_o = mock.MagicMock()
+    mock_o.return_value.__enter__ = lambda s: s
+    mock_o.return_value.__exit__ = mock.Mock()
+    mock_o.return_value.read.return_value = 'script'
+    mock_o.return_value.write = mock.Mock()
+    with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
+            mock.patch.object(builtins, 'open', mock_o) as mock_open, \
+            mock.patch.object(builtins, 'print') as mock_print:
+        uflash.main(argv=['-e', 'hex.hex'])
+        mock_open.assert_called_once_with('hex.hex', 'r')
+        mock_extract_script.assert_called_once_with('script')
+        mock_print.assert_called_once_with(b'print("hello, world!")')
 
 
 def test_extract_command_no_source():

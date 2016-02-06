@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>uflash &mdash; uFlash 1.0.0.beta.2 documentation</title>
+    <title>uflash &mdash; uFlash 1.0.0.beta.3 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0.beta.2',
+        VERSION:     '1.0.0.beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="uFlash 1.0.0.beta.2 documentation" href="../index.html" />
+    <link rel="top" title="uFlash 1.0.0.beta.3 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" />
    
   
@@ -70,7 +70,7 @@
 
 
 <span class="c1">#: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION</span>
-<span class="n">_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../index.html#uflash.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
@@ -254,7 +254,7 @@
         <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hex_file</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="flash"><a class="viewcode-back" href="../index.html#uflash.flash">[docs]</a><span class="k">def</span> <span class="nf">flash</span><span class="p">(</span><span class="n">path_to_python</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_to_microbit</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="flash"><a class="viewcode-back" href="../index.html#uflash.flash">[docs]</a><span class="k">def</span> <span class="nf">flash</span><span class="p">(</span><span class="n">path_to_python</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_to_microbit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_to_runtime</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a path to a Python file will attempt to create a hex file and then</span>
 <span class="sd">    flash it onto the referenced BBC micro:bit.</span>
@@ -264,6 +264,10 @@
 
 <span class="sd">    If the path_to_microbit is unspecified it will attempt to find the device&#39;s</span>
 <span class="sd">    path on the filesystem automatically.</span>
+
+<span class="sd">    If the path_to_runtime is unspecified it will use the built in version of</span>
+<span class="sd">    the MicroPython runtime. This feature is useful if a custom build of</span>
+<span class="sd">    MicroPython is available.</span>
 
 <span class="sd">    If the automatic discovery fails, then it will raise an IOError.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -278,16 +282,21 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Python files must end in &quot;.py&quot;.&#39;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_python</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">python_script</span><span class="p">:</span>
             <span class="n">python_hex</span> <span class="o">=</span> <span class="n">hexlify</span><span class="p">(</span><span class="n">python_script</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">runtime</span> <span class="o">=</span> <span class="n">_RUNTIME</span>
+    <span class="c1"># Load the hex for the runtime.</span>
+    <span class="k">if</span> <span class="n">path_to_runtime</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_runtime</span><span class="p">)</span> <span class="k">as</span> <span class="n">runtime_file</span><span class="p">:</span>
+            <span class="n">runtime</span> <span class="o">=</span> <span class="n">runtime_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="c1"># Generate the resulting hex file.</span>
-    <span class="n">micropython_hex</span> <span class="o">=</span> <span class="n">embed_hex</span><span class="p">(</span><span class="n">_RUNTIME</span><span class="p">,</span> <span class="n">python_hex</span><span class="p">)</span>
+    <span class="n">micropython_hex</span> <span class="o">=</span> <span class="n">embed_hex</span><span class="p">(</span><span class="n">runtime</span><span class="p">,</span> <span class="n">python_hex</span><span class="p">)</span>
     <span class="c1"># Find the micro:bit.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path_to_microbit</span><span class="p">:</span>
         <span class="n">path_to_microbit</span> <span class="o">=</span> <span class="n">find_microbit</span><span class="p">()</span>
     <span class="c1"># Attempt to write the hex file to the micro:bit.</span>
     <span class="k">if</span> <span class="n">path_to_microbit</span><span class="p">:</span>
-        <span class="n">hex_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_microbit</span><span class="p">,</span> <span class="s1">&#39;micropython.hex&#39;</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Flashing Python to: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hex_file</span><span class="p">))</span>
-        <span class="n">save_hex</span><span class="p">(</span><span class="n">micropython_hex</span><span class="p">,</span> <span class="n">hex_file</span><span class="p">)</span>
+        <span class="n">hex_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_microbit</span><span class="p">,</span> <span class="s1">&#39;micropython.hex&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Flashing Python to: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hex_path</span><span class="p">))</span>
+        <span class="n">save_hex</span><span class="p">(</span><span class="n">micropython_hex</span><span class="p">,</span> <span class="n">hex_path</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Unable to find micro:bit. Is it plugged in?&#39;</span><span class="p">)</span></div>
 
@@ -325,16 +334,19 @@
         <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="n">_HELP_TEXT</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="s1">&#39;--runtime&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Use the referenced MicroPython runtime.&quot;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="s1">&#39;--extract&#39;</span><span class="p">,</span>
                             <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
-                            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Extract python source from a hex file</span>
-<span class="s2">                            instead of creating the hex file&quot;&quot;&quot;</span><span class="p">,</span> <span class="p">)</span>
+                            <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Extract python source from a hex file&quot;</span>
+                                  <span class="s2">&quot; instead of creating the hex file.&quot;</span><span class="p">),</span> <span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">extract</span><span class="p">:</span>
             <span class="n">extract</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">flash</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+            <span class="n">flash</span><span class="p">(</span><span class="n">path_to_python</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">path_to_microbit</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+                  <span class="n">path_to_runtime</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">runtime</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="c1"># The exception of no return. Print the exception information.</span>
         <span class="k">print</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span></div>

@@ -30,7 +30,7 @@ Documentation can be found here: http://uflash.readthedocs.org/en/latest/
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
-_VERSION = (1, 0, 0, 'beta', 2)
+_VERSION = (1, 0, 0, 'beta', 3)
 
 
 def get_version():
@@ -242,17 +242,21 @@ def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
             raise ValueError('Python files must end in ".py".')
         with open(path_to_python, 'rb') as python_script:
             python_hex = hexlify(python_script.read())
+    runtime = _RUNTIME
+    # Load the hex for the runtime.
+    if path_to_runtime:
+        with open(path_to_runtime) as runtime_file:
+            runtime = runtime_file.read()
     # Generate the resulting hex file.
-    micropython_hex = embed_hex(_RUNTIME, python_hex)
+    micropython_hex = embed_hex(runtime, python_hex)
     # Find the micro:bit.
     if not path_to_microbit:
         path_to_microbit = find_microbit()
-    raise NotImplemented('Path to hex')
     # Attempt to write the hex file to the micro:bit.
     if path_to_microbit:
-        hex_file = os.path.join(path_to_microbit, 'micropython.hex')
-        print('Flashing Python to: {}'.format(hex_file))
-        save_hex(micropython_hex, hex_file)
+        hex_path = os.path.join(path_to_microbit, 'micropython.hex')
+        print('Flashing Python to: {}'.format(hex_path))
+        save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
 
@@ -290,17 +294,19 @@ def main(argv=None):
         parser = argparse.ArgumentParser(description=_HELP_TEXT)
         parser.add_argument('source', nargs='?', default=None)
         parser.add_argument('target', nargs='?', default=None)
-        parser.add_argument('runtime', nargs='?', default=None)
+        parser.add_argument('-r', '--runtime', default=None,
+                            help="Use the referenced MicroPython runtime.")
         parser.add_argument('-e', '--extract',
                             action='store_true',
-                            help="""Extract python source from a hex file
-                            instead of creating the hex file""", )
+                            help=("Extract python source from a hex file"
+                                  " instead of creating the hex file."), )
         args = parser.parse_args(argv)
 
         if args.extract:
             extract(args.source, args.target)
         else:
-            flash(args.source, args.target, args.runtime)
+            flash(path_to_python=args.source, path_to_microbit=args.target,
+                  path_to_runtime=args.runtime)
     except Exception as ex:
         # The exception of no return. Print the exception information.
         print(ex)
