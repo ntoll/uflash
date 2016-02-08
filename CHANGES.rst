@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.0.beta.5
+------------
+
+* Runtime update to fix error reporting bug.
+
 1.0.0.beta.4
 ------------
 
