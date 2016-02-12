@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.0.beta.6
+------------
+
+* Runtime update to latest version of the DAL (swaps pins 4 and 5).
+
 1.0.0.beta.5
 ------------
 
