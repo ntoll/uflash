@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.0.beta.7
+------------
+
+* Runtime update to fix display related bug.
+
 1.0.0.beta.6
 ------------
 
