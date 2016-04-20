@@ -481,3 +481,43 @@ def test_extract_command_no_source():
     """
     with pytest.raises(TypeError):
         uflash.extract(None, None)
+
+def test_shrink_script():
+    """
+    shrunk scripts should behave exactly the same as unshrunk scripts,
+    and should not make scripts larger.
+    """
+
+    string1 = ''
+    string2 = ''
+
+    unshrunk_script="""
+    
+output = ''         
+
+for i in range(10):       
+
+    if((i%3==0) and ( i % 5 == 0 )):           
+        output +='!'
+    elif ( i % 3 == 0 ):
+        output +='F'
+    elif (i%5 == 0):
+        output += 'B'
+    else:
+        output += str(i)
+    
+
+    
+    """
+
+    shrunk_script = uflash.shrink_script(unshrunk_script)
+
+    exec unshrunk_script + "\nstring1 = output"
+    exec shrunk_script + "\nstring2 = output"
+    
+    print string1
+    print string2
+    
+    assert string1 == string2
+    assert len(unshrunk_script) >= len(shrunk_script)
+
