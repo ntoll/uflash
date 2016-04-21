@@ -485,7 +485,7 @@ def test_extract_command_no_source():
 def test_shrink_script():
     """
     shrunk scripts should behave exactly the same as unshrunk scripts,
-    and should not make scripts larger.
+    and should be the same size or smaller than unshrunk scripts.
     """
 
     string1 = ''
