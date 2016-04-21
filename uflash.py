@@ -157,7 +157,7 @@ def extract_script(embedded_hex):
 
 def shrink_script(script):
     """
-    Takes the byte content of a Pyton script, and attempts to return a
+    Takes the byte content of a Python script, and attempts to return a
     shrunk version of it.
     """
 
