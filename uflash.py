@@ -9,6 +9,7 @@ import os
 import struct
 import binascii
 import ctypes
+import re
 from subprocess import check_output
 
 
@@ -60,6 +61,8 @@ def hexlify(script):
     # Convert line endings in case the file was created on Windows.
     script = script.replace(b'\r\n', b'\n')
     script = script.replace(b'\r', b'\n')
+    # Shrink script.
+    script = shrink_script(script)
     # Add header, pad to multiple of 16 bytes.
     data = b'MP' + struct.pack('<H', len(script)) + script
     # Padding with null bytes in a 2/3 compatible way
@@ -150,6 +153,46 @@ def extract_script(embedded_hex):
         return ''
     # Pass the extracted hex through unhexlify
     return unhexlify(blob)
+
+
+def shrink_script(script):
+    """
+    Takes the byte content of a Python script, and attempts to return a
+    shrunk version of it.
+    """
+
+    indent_token = "\t"
+    shrunk_py = []
+    stack = [""]
+    line_syntax = re.compile('^(\s*)(.*)')
+    for line in [ l.rstrip() for l in script.split('\n') if l.rstrip() != "" ]:
+
+        # Get the leftmost padding.
+        match_object = line_syntax.match(line)
+        thisline_indents = match_object.group(1)
+
+        # Either it's the same indent level as the previous line, 
+        # one higher indent level than the previous line, or one or more dedents.
+        # Same indent level:
+        if (thisline_indents == stack[-1]):
+            pass
+
+        # One higher indent level:
+        elif ((len(thisline_indents) > len(stack[-1]))
+            and (thisline_indents[:len(stack[-1])] == stack[-1])):
+            stack.append(thisline_indents)
+
+        # One or more dedents:
+        elif (thisline_indents in stack):
+            stack = stack[:(stack.index(thisline_indents)+1)]
+
+        # Otherwise, we don't know about this indentation level, so throw a tantrum.
+        else:
+            raise IndentationError('Inconsistent indentation in user-supplied Python script.')
+
+        shrunk_py.append(indent_token*(len(stack)-1) + match_object.group(2))
+
+    return '\n'.join(shrunk_py)
 
 
 def find_microbit():
