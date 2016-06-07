@@ -11,6 +11,8 @@ import binascii
 import ctypes
 from subprocess import check_output
 
+from intelhex import IntelHex
+from StringIO import StringIO
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -136,20 +138,69 @@ def extract_script(embedded_hex):
 
     Returns a string containing the original embedded script.
     """
-    hex_lines = embedded_hex.split('\n')
-    # Blob will hold the extracted hex values representing the embedded script.
-    blob = ''
-    # Find the marker in the hex that comes just before the script
-    if ':020000040003F7' in hex_lines:
-        start_line = max(loc for loc, val in enumerate(hex_lines)
-                         if val == ':020000040003F7')
-        # Recombine the lines after that, but leave out the last 3 lines
-        blob = '\n'.join(hex_lines[start_line:-3])
-    if blob == '':
-        # If the result is the empty string, there was no embedded script
-        return ''
-    # Pass the extracted hex through unhexlify
-    return unhexlify(blob)
+
+    reference_file = StringIO(_RUNTIME)
+    candidate_file = StringIO(embedded_hex)
+
+    reference = IntelHex(reference_file)
+    candidate = IntelHex(candidate_file)
+
+    reference.padding = candidate.padding = 0x00
+
+    referenceaddrs = reference.addresses()
+    candidateaddrs = candidate.addresses()
+
+    referenceaddrs_count = len(referenceaddrs)
+    candidateaddrs_count = len(candidateaddrs)
+
+    r_cursor = 0
+    c_cursor = 0
+
+    while (c_cursor < candidateaddrs_count):
+
+        rdata = reference[referenceaddrs[r_cursor]]
+        cdata = candidate[candidateaddrs[c_cursor]]
+
+        if (rdata == cdata):
+            r_cursor += 1
+            c_cursor += 1
+        else:
+            r_cursor = 0
+            c_cursor += 1
+
+        if (r_cursor == referenceaddrs_count): #We've found the whole upython interpreter
+
+            # Check header.
+            valid_header = True
+            for c in "\x4D\x50":
+                data = candidate[candidateaddrs[c_cursor]]
+                if (chr(data) != c):
+                    valid_header = False
+                else:
+                    c_cursor += 1
+
+            if (valid_header):
+			
+                # Get script length
+                byte_1 = candidate[candidateaddrs[c_cursor]]
+                c_cursor += 1
+                byte_2 = candidate[candidateaddrs[c_cursor]]
+                c_cursor += 1
+
+                scriptlength = struct.unpack('<H', chr(byte_1) + chr(byte_2))[0]
+                scriptend = c_cursor + scriptlength
+
+                # convert to ascii.
+                script = ""
+                while ((c_cursor < scriptend) and (candidate[candidateaddrs[c_cursor]] != 0x00)):
+                    data = candidate[candidateaddrs[c_cursor]]
+                    script += chr(data)
+                    c_cursor += 1
+                return script
+
+    # Otherwise, return nothing.			
+    return ""
+
 
 
 def find_microbit():
