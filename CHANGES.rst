@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.1
+-----
+
+* Update runtime to include file system related changes.
+
 1.0.0.final.0
 -------------
 
