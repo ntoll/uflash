@@ -13,6 +13,7 @@ from subprocess import check_output
 
 from intelhex import IntelHex
 from StringIO import StringIO
+import string
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -139,68 +140,71 @@ def extract_script(embedded_hex):
     Returns a string containing the original embedded script.
     """
 
-    reference_file = StringIO(_RUNTIME)
+    found_script = None
+
     candidate_file = StringIO(embedded_hex)
-
-    reference = IntelHex(reference_file)
     candidate = IntelHex(candidate_file)
-
-    reference.padding = candidate.padding = 0x00
-
-    referenceaddrs = reference.addresses()
+    candidate.padding = 0x00
     candidateaddrs = candidate.addresses()
-
-    referenceaddrs_count = len(referenceaddrs)
     candidateaddrs_count = len(candidateaddrs)
-
-    r_cursor = 0
-    c_cursor = 0
+    c_cursor = 1
 
     while (c_cursor < candidateaddrs_count):
 
-        rdata = reference[referenceaddrs[r_cursor]]
-        cdata = candidate[candidateaddrs[c_cursor]]
+        cdata_1 = candidate[candidateaddrs[c_cursor]]
+        cdata_0 = candidate[candidateaddrs[c_cursor-1]]
 
-        if (rdata == cdata):
-            r_cursor += 1
-            c_cursor += 1
-        else:
-            r_cursor = 0
-            c_cursor += 1
+        # look for the MP header.
+        if ((cdata_0 == 0x4D) and (cdata_1 == 0x50)):
+            
+            bookmark = c_cursor
+            
+            #We've potentially found the script.
+            
+            try:
 
-        if (r_cursor == referenceaddrs_count): #We've found the whole upython interpreter
-
-            # Check header.
-            valid_header = True
-            for c in "\x4D\x50":
-                data = candidate[candidateaddrs[c_cursor]]
-                if (chr(data) != c):
-                    valid_header = False
-                else:
-                    c_cursor += 1
-
-            if (valid_header):
-			
-                # Get script length
+                c_cursor += 1
+                byte_0 = candidate[candidateaddrs[c_cursor]]
+                c_cursor += 1
                 byte_1 = candidate[candidateaddrs[c_cursor]]
                 c_cursor += 1
-                byte_2 = candidate[candidateaddrs[c_cursor]]
+                scriptlength = struct.unpack('<H', chr(byte_0) + chr(byte_1))[0]
+
+            except IndexError:
+                c_cursor = bookmark + 1
+            
+            if (scriptlength == 0):
+                found_script = ""
                 c_cursor += 1
+            else:
 
-                scriptlength = struct.unpack('<H', chr(byte_1) + chr(byte_2))[0]
-                scriptend = c_cursor + scriptlength
+                try:
+                    #read that many bytes.
+                    potential_script = ""
 
-                # convert to ascii.
-                script = ""
-                while ((c_cursor < scriptend) and (candidate[candidateaddrs[c_cursor]] != 0x00)):
-                    data = candidate[candidateaddrs[c_cursor]]
-                    script += chr(data)
-                    c_cursor += 1
-                return script
+                    for _ in range(scriptlength):
+                        potential_script += chr(candidate[candidateaddrs[c_cursor]])
+                        c_cursor += 1
 
-    # Otherwise, return nothing.			
-    return ""
+                except IndexError:
+                    c_cursor = bookmark + 1
 
+                else:
+                    #check if it works.
+                    potential_script = potential_script.rstrip("\x00")
+                    if (all(letter in string.printable for letter in potential_script)):
+                        #If it does: check if this is just nulls.
+                        if (len(potential_script) == 0):
+                            c_cursor = bookmark + 1
+                        #if it's not: it's probably the user script.
+                        else:
+                            found_script = potential_script
+                            break
+
+        else:
+            c_cursor += 1
+
+    return found_script
 
 
 def find_microbit():
