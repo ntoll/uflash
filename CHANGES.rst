@@ -1,6 +1,16 @@
 Release History
 ===============
 
+1.0.3
+-----
+
+* Update runtime to include audio and speech modules.
+
+1.0.2
+-----
+
+* Update runtime to include the new radio module.
+
 1.0.1
 -----
 
