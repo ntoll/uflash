@@ -4,6 +4,7 @@ pyflakes
 coverage
 sphinx
 pytest-cov
+IntelHex
 
 # Mock is bundled as part of unittest since Python 3.3
 mock ; python_version == '2.7'

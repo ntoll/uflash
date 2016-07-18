@@ -11,6 +11,9 @@ import binascii
 import ctypes
 from subprocess import check_output
 
+from intelhex import IntelHex
+from StringIO import StringIO
+import string
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -136,20 +139,72 @@ def extract_script(embedded_hex):
 
     Returns a string containing the original embedded script.
     """
-    hex_lines = embedded_hex.split('\n')
-    # Blob will hold the extracted hex values representing the embedded script.
-    blob = ''
-    # Find the marker in the hex that comes just before the script
-    if ':020000040003F7' in hex_lines:
-        start_line = max(loc for loc, val in enumerate(hex_lines)
-                         if val == ':020000040003F7')
-        # Recombine the lines after that, but leave out the last 3 lines
-        blob = '\n'.join(hex_lines[start_line:-3])
-    if blob == '':
-        # If the result is the empty string, there was no embedded script
-        return ''
-    # Pass the extracted hex through unhexlify
-    return unhexlify(blob)
+
+    found_script = None
+
+    candidate_file = StringIO(embedded_hex)
+    candidate = IntelHex(candidate_file)
+    candidate.padding = 0x00
+    candidateaddrs = candidate.addresses()
+    candidateaddrs_count = len(candidateaddrs)
+    c_cursor = 1
+
+    while (c_cursor < candidateaddrs_count):
+
+        cdata_1 = candidate[candidateaddrs[c_cursor]]
+        cdata_0 = candidate[candidateaddrs[c_cursor-1]]
+
+        # look for the MP header.
+        if ((cdata_0 == 0x4D) and (cdata_1 == 0x50)):
+            
+            bookmark = c_cursor
+            
+            #We've potentially found the script.
+            
+            try:
+
+                c_cursor += 1
+                byte_0 = candidate[candidateaddrs[c_cursor]]
+                c_cursor += 1
+                byte_1 = candidate[candidateaddrs[c_cursor]]
+                c_cursor += 1
+                scriptlength = struct.unpack('<H', chr(byte_0) + chr(byte_1))[0]
+
+            except IndexError:
+                c_cursor = bookmark + 1
+            
+            if (scriptlength == 0):
+                found_script = ""
+                c_cursor += 1
+            else:
+
+                try:
+                    #read that many bytes.
+                    potential_script = ""
+
+                    for _ in range(scriptlength):
+                        potential_script += chr(candidate[candidateaddrs[c_cursor]])
+                        c_cursor += 1
+
+                except IndexError:
+                    c_cursor = bookmark + 1
+
+                else:
+                    #check if it works.
+                    potential_script = potential_script.rstrip("\x00")
+                    if (all(letter in string.printable for letter in potential_script)):
+                        #If it does: check if this is just nulls.
+                        if (len(potential_script) == 0):
+                            c_cursor = bookmark + 1
+                        #if it's not: it's probably the user script.
+                        else:
+                            found_script = potential_script
+                            break
+
+        else:
+            c_cursor += 1
+
+    return found_script
 
 
 def find_microbit():
