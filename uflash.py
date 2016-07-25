@@ -3,6 +3,7 @@
 This module contains functions for turning a Python script into a .hex file
 and flashing it onto a BBC micro:bit.
 """
+from __future__ import print_function
 import argparse
 import sys
 import os
