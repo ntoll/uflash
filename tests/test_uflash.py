@@ -197,7 +197,7 @@ def test_find_microbit_unknown_os():
     with mock.patch('os.name', 'foo'):
         with pytest.raises(NotImplementedError) as ex:
             uflash.find_microbit()
-    assert ex.value.args[0] == 'OS not supported.'
+    assert ex.value.args[0] == 'OS "foo" not supported.'
 
 
 def test_save_hex():

@@ -194,7 +194,7 @@ def find_microbit():
                 return path
     else:
         # No support for unknown operating systems.
-        raise NotImplementedError('OS not supported.')
+        raise NotImplementedError('OS "{}" not supported.'.format(os.name))
 
 
 def save_hex(hex_file, path):
