@@ -6,4 +6,5 @@ sphinx
 pytest-cov
 
 # Mock is bundled as part of unittest since Python 3.3
-mock ; python_version == '2.7'
+# mock_open can't read binary data in <= 3.4.2
+mock ; python_version == '2.7' or python_version == '3.4'

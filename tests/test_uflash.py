@@ -15,7 +15,11 @@ try:
     from unittest import mock
 except ImportError:
     import mock
-
+else:
+    # mock_open can't read binary data in < 3.4.3
+    # https://bugs.python.org/issue23004
+    if (3, 4) <= sys.version_info < (3, 4, 3):
+        import mock
 
 
 if sys.version_info.major == 2:
@@ -300,10 +304,7 @@ def test_flash_with_path_to_runtime():
     Use the referenced runtime hex file when building the hex file to be
     flashed onto the device.
     """
-    mock_o = mock.MagicMock()
-    mock_o.return_value.__enter__ = lambda s: s
-    mock_o.return_value.__exit__ = mock.Mock()
-    mock_o.return_value.read.return_value = 'script'
+    mock_o = mock.mock_open(read_data=b'script')
     with mock.patch.object(builtins, 'open', mock_o) as mock_open:
         with mock.patch('uflash.embed_hex', return_value='foo') as em_h:
             with mock.patch('uflash.find_microbit', return_value='bar'):
@@ -311,7 +312,7 @@ def test_flash_with_path_to_runtime():
                     uflash.flash('tests/example.py',
                                  path_to_runtime='tests/fake.hex')
                     assert mock_open.call_args[0][0] == 'tests/fake.hex'
-                    assert em_h.call_args[0][0] == 'script'
+                    assert em_h.call_args[0][0] == b'script'
                     mock_save.assert_called_once_with('foo',
                                                       'bar/micropython.hex')
 
@@ -437,11 +438,7 @@ def test_extract_paths():
     When called with two arguments it should write the output to the output arg
     """
     mock_e = mock.MagicMock(return_value=b'print("hello, world!")')
-    mock_o = mock.MagicMock()
-    mock_o.return_value.__enter__ = lambda s: s
-    mock_o.return_value.__exit__ = mock.Mock()
-    mock_o.return_value.read.return_value = 'script'
-    mock_o.return_value.write = mock.Mock()
+    mock_o = mock.mock_open(read_data='script')
 
     with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
             mock.patch.object(builtins, 'print') as mock_print, \
@@ -453,7 +450,7 @@ def test_extract_paths():
 
         uflash.extract('foo.hex', 'out.py')
         assert mock_open.call_count == 3
-        assert mock_open.called_with('out.py', 'w')
+        mock_open.assert_called_with('out.py', 'w')
         assert mock_open.return_value.write.call_count == 1
 
 
@@ -462,11 +459,7 @@ def test_extract_command_source_only():
     If there is no target file the extract command should write to stdout.
     """
     mock_e = mock.MagicMock(return_value=b'print("hello, world!")')
-    mock_o = mock.MagicMock()
-    mock_o.return_value.__enter__ = lambda s: s
-    mock_o.return_value.__exit__ = mock.Mock()
-    mock_o.return_value.read.return_value = 'script'
-    mock_o.return_value.write = mock.Mock()
+    mock_o = mock.mock_open(read_data='script')
     with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
             mock.patch.object(builtins, 'open', mock_o) as mock_open, \
             mock.patch.object(builtins, 'print') as mock_print:
