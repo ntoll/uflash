@@ -4,14 +4,14 @@ This module contains functions for turning a Python script into a .hex file
 and flashing it onto a BBC micro:bit.
 """
 from __future__ import print_function
+
 import argparse
-import sys
-import os
-import struct
 import binascii
 import ctypes
+import os
+import struct
+import sys
 from subprocess import check_output
-
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000

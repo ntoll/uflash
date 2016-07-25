@@ -2,19 +2,20 @@
 """
 Tests for the uflash module.
 """
-import tempfile
-import os
-import sys
-import os.path
 import ctypes
+import os
+import os.path
+import sys
+import tempfile
+
+import pytest
+import uflash
 
 try:
     from unittest import mock
 except ImportError:
     import mock
 
-import pytest
-import uflash
 
 
 if sys.version_info.major == 2:
