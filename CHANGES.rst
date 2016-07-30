@@ -1,6 +1,10 @@
 Release History
 ===============
 
+1.0.4.dev0
+
+* Add support for flash multiple microbits.
+
 1.0.3
 -----
 
