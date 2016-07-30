@@ -313,8 +313,8 @@ def test_flash_with_path_to_runtime():
                                  path_to_runtime='tests/fake.hex')
                     assert mock_open.call_args[0][0] == 'tests/fake.hex'
                     assert em_h.call_args[0][0] == b'script'
-                    mock_save.assert_called_once_with('foo',
-                                                      'bar/micropython.hex')
+                    expected_hex_path = os.path.join('bar', 'micropython.hex')
+                    mock_save.assert_called_once_with('foo', expected_hex_path)
 
 
 def test_flash_cannot_find_microbit():
