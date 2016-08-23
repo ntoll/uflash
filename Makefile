@@ -18,6 +18,7 @@ clean:
 	rm -rf dist
 	rm -rf uflash.egg-info
 	rm -rf .coverage
+	rm -rf .tox
 	rm -rf docs/_build
 	find . \( -name '*.py[co]' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.bak' -o -name dropin.cache \) -print0 | $(XARGS) rm
@@ -26,7 +27,7 @@ clean:
 pyflakes:
 	find . \( -name _build -o -name var -o -path ./docs \) -type d -prune -o -name '*.py' -print0 | $(XARGS) pyflakes
 
-pep8:
+pep8: clean
 	find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pep8 --repeat --exclude=build/*,docs/* --ignore=E731,E402
 
 test: clean
