@@ -65,6 +65,12 @@ second argument to the command::
     $ uflash myscript.py /media/ntoll/MICROBIT
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 
+You can even flash multiple devices at once:
+
+    $ uflash myscript.py /media/ntoll/MICROBIT /media/ntoll/MICROBIT1
+    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing Python to: /media/ntoll/MICROBIT1/micropython.hex
+
 To extract a Python script from a hex file use the "-e" flag like this::
 
     $ uflash -e something.hex myscript.py

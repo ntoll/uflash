@@ -5,3 +5,4 @@ uflash.egg-info/*
 .coverage
 dist/*
 build/*
+.tox

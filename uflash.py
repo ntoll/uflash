@@ -3,14 +3,15 @@
 This module contains functions for turning a Python script into a .hex file
 and flashing it onto a BBC micro:bit.
 """
+from __future__ import print_function
+
 import argparse
-import sys
-import os
-import struct
 import binascii
 import ctypes
+import os
+import struct
+import sys
 from subprocess import check_output
-
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -193,7 +194,7 @@ def find_microbit():
                 return path
     else:
         # No support for unknown operating systems.
-        raise NotImplementedError('OS not supported.')
+        raise NotImplementedError('OS "{}" not supported.'.format(os.name))
 
 
 def save_hex(hex_file, path):
@@ -215,7 +216,7 @@ def save_hex(hex_file, path):
         output.write(hex_file.encode('ascii'))
 
 
-def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
+def flash(path_to_python=None, paths_to_microbits=None, path_to_runtime=None):
     """
     Given a path to a Python file will attempt to create a hex file and then
     flash it onto the referenced BBC micro:bit.
@@ -223,7 +224,7 @@ def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
     If the path_to_python is unspecified it will simply flash the unmodified
     MicroPython runtime onto the device.
 
-    If the path_to_microbit is unspecified it will attempt to find the device's
+    If paths_to_microbits is unspecified it will attempt to find the device's
     path on the filesystem automatically.
 
     If the path_to_runtime is unspecified it will use the built in version of
@@ -251,13 +252,16 @@ def flash(path_to_python=None, path_to_microbit=None, path_to_runtime=None):
     # Generate the resulting hex file.
     micropython_hex = embed_hex(runtime, python_hex)
     # Find the micro:bit.
-    if not path_to_microbit:
-        path_to_microbit = find_microbit()
+    if not paths_to_microbits:
+        found_microbit = find_microbit()
+        if found_microbit:
+            paths_to_microbits = [found_microbit]
     # Attempt to write the hex file to the micro:bit.
-    if path_to_microbit:
-        hex_path = os.path.join(path_to_microbit, 'micropython.hex')
-        print('Flashing Python to: {}'.format(hex_path))
-        save_hex(micropython_hex, hex_path)
+    if paths_to_microbits:
+        for path in paths_to_microbits:
+            hex_path = os.path.join(path, 'micropython.hex')
+            print('Flashing Python to: {}'.format(hex_path))
+            save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
 
@@ -269,7 +273,7 @@ def extract(path_to_hex, output_path=None):
     """
     with open(path_to_hex, 'r') as hex_file:
         python_script = extract_script(hex_file.read())
-        if output_path is not None:
+        if output_path:
             with open(output_path, 'w') as output_file:
                 output_file.write(python_script)
         else:
@@ -294,7 +298,7 @@ def main(argv=None):
     try:
         parser = argparse.ArgumentParser(description=_HELP_TEXT)
         parser.add_argument('source', nargs='?', default=None)
-        parser.add_argument('target', nargs='?', default=None)
+        parser.add_argument('target', nargs='*', default=None)
         parser.add_argument('-r', '--runtime', default=None,
                             help="Use the referenced MicroPython runtime.")
         parser.add_argument('-e', '--extract',
@@ -306,7 +310,7 @@ def main(argv=None):
         if args.extract:
             extract(args.source, args.target)
         else:
-            flash(path_to_python=args.source, path_to_microbit=args.target,
+            flash(path_to_python=args.source, paths_to_microbits=args.target,
                   path_to_runtime=args.runtime)
     except Exception as ex:
         # The exception of no return. Print the exception information.
