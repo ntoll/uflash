@@ -65,7 +65,7 @@ second argument to the command::
     $ uflash myscript.py /media/ntoll/MICROBIT
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 
-You can even flash multiple devices at once:
+You can even flash multiple devices at once::
 
     $ uflash myscript.py /media/ntoll/MICROBIT /media/ntoll/MICROBIT1
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
@@ -109,9 +109,9 @@ run the following command::
     $ python setup.py develop
 
 There is a Makefile that helps with most of the common workflows associated
-with development. Typing "make" on its own will list the options thus::
+with development. Typing ``make`` on its own will list the options thus::
 
-    $make
+    $ make
 
     There is no default Makefile target right now. Try:
 
