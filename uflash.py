@@ -11,8 +11,8 @@ import binascii
 import ctypes
 from subprocess import check_output
 
-from intelhex import IntelHex
-from StringIO import StringIO
+#from intelhex import IntelHex
+#from StringIO import StringIO
 import string
 
 #: The magic start address in flash memory for a Python script.
@@ -131,28 +131,130 @@ def embed_hex(runtime_hex, python_hex=None):
     embedded_list.extend(runtime_list[-2:])
     return '\n'.join(embedded_list) + '\n'
 
+def map_memory(data_in):
+
+    # mapping between addresses and datas:
+    memory_map = {}
+
+    # most recent address offset:
+    addr_offset = 0
+
+    # line counter:
+    line_counter = 1
+
+    for each_line in data_in.split(): # For each line:
+        
+        line = each_line.strip()
+        
+        #deal with padding:
+        if (len(line) == 0):
+            pass
+        
+        else:
+            # check syntax
+            try:
+                
+                assert(len(line) >= 11) #minimum line length?
+                assert((len(line) - 1) % 2 == 0) #odd number of characters?
+                assert(line[0] == ":") #first character is a colon?
+                checksum = (0x100 - ((sum(int(line[i:i+2],16) for i in range(1, (len(line)-2), 2))) & 0xff)) & 0xff
+                assert (int(line[-2:], 16) == checksum) #checksum adds up?
+
+                # try to actually extract some information.
+                bytecount = int(line[1:3], 16)
+                address = int(line[3:7], 16)
+                recordtype = int(line[8])
+                databytes = [int(line[9+i:11+i],16) for i in range(0,(2*bytecount),2)]
+                assert(bytecount == len(databytes))
+
+            except:
+                print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
+                print "Open up your hex file in a text editor (like notepad) and have a look at that line; does anything look unusual?"
+                return {}
+
+            # record-type-dependent behaviours & checking:
+
+            if (recordtype == 0): # Data record:
+                try:
+                    for i in range(bytecount):
+                        abs_addr = address + addr_offset + i
+                        memory_map[abs_addr] = databytes[i]
+                except:
+                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
+                    print "It looks like your hex file is missing some byte information."
+                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
+                    print "How did you acquire this hex file?"
+                    return {}
+
+            elif (recordtype == 1): # EoF record:
+                break
+
+            elif (recordtype == 2): # Extended Segment Address records:
+                try:
+                    addr_offset = 16 * ((databytes[0] << 8) + databytes[1])
+                except:
+                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
+                    print "It looks like your hex file is missing some byte information."
+                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
+                    print "How did you acquire this hex file?"
+                    return {}
+
+            elif (recordtype == 3): # Start Segment Address records:
+                pass # don't care, registers aren't memory-mapped.
+
+            elif (recordtype == 4): # Extended Linear Address records:
+                try:
+                    addr_offset = (databytes[0] << 24) + (databytes[1] << 16)
+                except:
+                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
+                    print "It looks like your hex file is missing some byte information."
+                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
+                    print "How did you acquire this hex file?"
+                    return {}
+
+            elif (recordtype == 5): # Start Linear Address records:
+                pass # don't care, EIP isn't memory-mapped
+
+            else:
+                print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
+                print "It looks like your hex file contains a non-standard type of record."
+                print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
+                print "How did you acquire this hex file?"
+                return {}
+
+        line_counter += 1
+
+    #done, return the memory map.
+    return memory_map
+
 
 def extract_script(embedded_hex):
     """
-    Given a hex file containing the MicroPython runtime and an embedded Python
-    script, will extract the original Python script.
+    Given the contents of hex file containing the MicroPython runtime
+    and an embedded Python script, will extract the original Python script.
 
     Returns a string containing the original embedded script.
     """
 
-    found_script = None
+#    found_script = None
+    found_script = ""
 
-    candidate_file = StringIO(embedded_hex)
-    candidate = IntelHex(candidate_file)
-    candidate.padding = 0x00
-    candidateaddrs = candidate.addresses()
-    candidateaddrs_count = len(candidateaddrs)
+#    candidate_file = StringIO(embedded_hex)
+#    candidate = IntelHex(candidate_file)
+#    candidate.padding = 0x00
+#    candidateaddrs = candidate.addresses()
+#    candidateaddrs_count = len(candidateaddrs)
+
+    mem_map = map_memory(embedded_hex)
+    addrs = sorted(mem_map.keys())
+    addrs_count = len(addrs)
+
     c_cursor = 1
 
-    while (c_cursor < candidateaddrs_count):
+    while (c_cursor < addrs_count):
 
-        cdata_1 = candidate[candidateaddrs[c_cursor]]
-        cdata_0 = candidate[candidateaddrs[c_cursor-1]]
+        cdata_1 = mem_map[addrs[c_cursor]]
+        cdata_0 = mem_map[addrs[c_cursor-1]]
 
         # look for the MP header.
         if ((cdata_0 == 0x4D) and (cdata_1 == 0x50)):
@@ -164,9 +266,9 @@ def extract_script(embedded_hex):
             try:
 
                 c_cursor += 1
-                byte_0 = candidate[candidateaddrs[c_cursor]]
+                byte_0 = mem_map[addrs[c_cursor]]
                 c_cursor += 1
-                byte_1 = candidate[candidateaddrs[c_cursor]]
+                byte_1 = mem_map[addrs[c_cursor]]
                 c_cursor += 1
                 scriptlength = struct.unpack('<H', chr(byte_0) + chr(byte_1))[0]
 
@@ -183,7 +285,7 @@ def extract_script(embedded_hex):
                     potential_script = ""
 
                     for _ in range(scriptlength):
-                        potential_script += chr(candidate[candidateaddrs[c_cursor]])
+                        potential_script += chr(mem_map[addrs[c_cursor]])
                         c_cursor += 1
 
                 except IndexError:
