@@ -16510,7 +16510,7 @@ def test_extract_not_valid_hex():
     """
     Return a sensible message if the hex file isn't valid
     """
-    assert uflash.extract_script('invalid input') == ''
+    assert uflash.extract_script('invalid input') == None
 
 
 def test_extract_no_python():

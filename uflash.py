@@ -168,8 +168,8 @@ def map_memory(data_in):
                 assert(bytecount == len(databytes))
 
             except:
-                print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
-                print "Open up your hex file in a text editor (like notepad) and have a look at that line; does anything look unusual?"
+                print("Don't panic - but there's an error in your input hex file on line " + str(line_counter) + ".")
+                print("Open up your hex file in a text editor (like notepad) and have a look at that line; does anything look unusual?")
                 return {}
 
             # record-type-dependent behaviours & checking:
@@ -180,10 +180,10 @@ def map_memory(data_in):
                         abs_addr = address + addr_offset + i
                         memory_map[abs_addr] = databytes[i]
                 except:
-                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
-                    print "It looks like your hex file is missing some byte information."
-                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
-                    print "How did you acquire this hex file?"
+                    print("Don't panic - but there's an error in your input hex file on line " + str(line_counter) + ".")
+                    print("It looks like your hex file is missing some byte information.")
+                    print("Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools.")
+                    print("How did you acquire this hex file?")
                     return {}
 
             elif (recordtype == 1): # EoF record:
@@ -193,10 +193,10 @@ def map_memory(data_in):
                 try:
                     addr_offset = 16 * ((databytes[0] << 8) + databytes[1])
                 except:
-                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
-                    print "It looks like your hex file is missing some byte information."
-                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
-                    print "How did you acquire this hex file?"
+                    print("Don't panic - but there's an error in your input hex file on line " + str(line_counter) + ".")
+                    print("It looks like your hex file is missing some byte information.")
+                    print("Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools.")
+                    print("How did you acquire this hex file?")
                     return {}
 
             elif (recordtype == 3): # Start Segment Address records:
@@ -206,20 +206,20 @@ def map_memory(data_in):
                 try:
                     addr_offset = (databytes[0] << 24) + (databytes[1] << 16)
                 except:
-                    print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
-                    print "It looks like your hex file is missing some byte information."
-                    print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
-                    print "How did you acquire this hex file?"
+                    print("Don't panic - but there's an error in your input hex file on line " + str(line_counter) + ".")
+                    print("It looks like your hex file is missing some byte information.")
+                    print("Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools.")
+                    print("How did you acquire this hex file?")
                     return {}
 
             elif (recordtype == 5): # Start Linear Address records:
                 pass # don't care, EIP isn't memory-mapped
 
             else:
-                print "Don't panic - but there's an error in your input hex file on line " + str(line_counter) + "."
-                print "It looks like your hex file contains a non-standard type of record."
-                print "Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools."
-                print "How did you acquire this hex file?"
+                print("Don't panic - but there's an error in your input hex file on line " + str(line_counter) + ".")
+                print("It looks like your hex file contains a non-standard type of record.")
+                print("Errors of this variety normally aren't your fault, but are instead due to the file being produced using faulty tools.")
+                print("How did you acquire this hex file?")
                 return {}
 
         line_counter += 1
@@ -236,14 +236,7 @@ def extract_script(embedded_hex):
     Returns a string containing the original embedded script.
     """
 
-#    found_script = None
-    found_script = ""
-
-#    candidate_file = StringIO(embedded_hex)
-#    candidate = IntelHex(candidate_file)
-#    candidate.padding = 0x00
-#    candidateaddrs = candidate.addresses()
-#    candidateaddrs_count = len(candidateaddrs)
+    found_script = None
 
     mem_map = map_memory(embedded_hex)
     addrs = sorted(mem_map.keys())
