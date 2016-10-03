@@ -299,7 +299,10 @@ def extract_script(embedded_hex):
         else:
             c_cursor += 1
 
-    return found_script
+    if found_script is None:
+        return ''
+    else:
+        return found_script
 
 
 def find_microbit():
