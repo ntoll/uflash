@@ -11,8 +11,6 @@ import binascii
 import ctypes
 from subprocess import check_output
 
-#from intelhex import IntelHex
-#from StringIO import StringIO
 import string
 
 #: The magic start address in flash memory for a Python script.
