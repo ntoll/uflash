@@ -27,7 +27,7 @@ will flash the unmodified MicroPython firmware onto the device. Use the -e flag
 to recover a Python script from a hex file. Use the -r flag to specify a custom
 version of the MicroPython runtime.
 
-Documentation is here: http://uflash.readthedocs.org/en/latest/
+Documentation is here: https://uflash.readthedocs.io/en/latest/
 """
 
 

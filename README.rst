@@ -109,9 +109,9 @@ run the following command::
     $ python setup.py develop
 
 There is a Makefile that helps with most of the common workflows associated
-with development. Typing "make" on its own will list the options thus::
+with development. Typing ``make`` on its own will list the options thus::
 
-    $make
+    $ make
 
     There is no default Makefile target right now. Try:
 
