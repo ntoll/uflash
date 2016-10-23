@@ -198,7 +198,8 @@ def find_microbit():
         try:
             for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 path = '{}:\\'.format(disk)
-                if os.path.exists(path) and get_volume_name(path) == 'MICROBIT':
+                if (os.path.exists(path) and
+                        get_volume_name(path) == 'MICROBIT'):
                     return path
         finally:
             ctypes.windll.kernel32.SetErrorMode(old_mode)
