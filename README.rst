@@ -65,7 +65,7 @@ second argument to the command::
     $ uflash myscript.py /media/ntoll/MICROBIT
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 
-You can even flash multiple devices at once:
+You can even flash multiple devices at once::
 
     $ uflash myscript.py /media/ntoll/MICROBIT /media/ntoll/MICROBIT1
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex

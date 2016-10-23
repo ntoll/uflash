@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.5
+-----
+
+* Update runtime to include latest bug fixes and inclusion of input() builtin.
+
 1.0.4
 -----
 
