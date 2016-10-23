@@ -15485,3 +15485,6 @@ _RUNTIME = """:020000040000FA
 :04000005000153E5BE
 :00000001FF
 """
+
+if __name__ == '__main__':  # pragma: no cover
+    main(sys.argv[1:])
