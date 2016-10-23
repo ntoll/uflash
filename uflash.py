@@ -188,10 +188,21 @@ def find_microbit():
                 ctypes.sizeof(vol_name_buf), None, None, None, None, 0)
             return vol_name_buf.value
 
-        for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-            path = '{}:\\'.format(disk)
-            if os.path.exists(path) and get_volume_name(path) == 'MICROBIT':
-                return path
+        #
+        # In certain circumstances, volumes are allocated to USB
+        # storage devices which cause a Windows popup to raise if their
+        # volume contains no media. Wrapping the check in SetErrorMode
+        # with SEM_FAILCRITICALERRORS (1) prevents this popup.
+        #
+        old_mode = ctypes.windll.kernel32.SetErrorMode(1)
+        try:
+            for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                path = '{}:\\'.format(disk)
+                if (os.path.exists(path) and
+                        get_volume_name(path) == 'MICROBIT'):
+                    return path
+        finally:
+            ctypes.windll.kernel32.SetErrorMode(old_mode)
     else:
         # No support for unknown operating systems.
         raise NotImplementedError('OS "{}" not supported.'.format(os.name))
