@@ -5,6 +5,8 @@ Release History
 -----
 
 * Update runtime to include latest bug fixes and inclusion of input() builtin.
+* Detecting drives on Windows 10 no longer causes pop-ups in certain situations.
+* Documentation updates.
 
 1.0.4
 -----
