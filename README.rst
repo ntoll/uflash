@@ -32,6 +32,17 @@ latest version, use the following command::
 
     $ pip install --no-cache --upgrade uflash
 
+**NB:** You must use a USB *data* cable to connect the micro:bit to your
+computer (some cables are power only). You're in good shape if, when plugged
+in, the micro:bit appears as a USB storage device on your file system.
+
+Linux users: For uflash to work you must ensure the micro:bit is mounted as a
+USB storage device. Usually this is done automatically. If not you've probably
+configured automounting to be off. If that's the case, we assume you
+have the technical knowledge to mount the device yourself or to install the
+required kernel modules if they're missing. Default installs of popular Linux
+distros "should just work" (tm) out of the box given a default install.
+
 Command Usage
 -------------
 
