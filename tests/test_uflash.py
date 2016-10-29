@@ -7,6 +7,8 @@ import os
 import os.path
 import sys
 import tempfile
+import time
+import threading
 
 import pytest
 import uflash
@@ -461,6 +463,19 @@ def test_main_named_args():
                                            path_to_runtime='baz.hex')
 
 
+def test_main_watch_flag():
+    """
+    The watch flag cause a call the correct function.
+    """
+    with mock.patch('uflash.watch_file') as mock_watch_file:
+        uflash.main(argv=['-w'])
+        mock_watch_file.assert_called_once_with(None,
+                                                uflash.flash,
+                                                path_to_python=None,
+                                                paths_to_microbits=[],
+                                                path_to_runtime=None)
+
+
 def test_extract_command():
     """
     Test the command-line script extract feature
@@ -515,3 +530,44 @@ def test_extract_command_no_source():
     """
     with pytest.raises(TypeError):
         uflash.extract(None, None)
+
+
+def test_watch_no_source():
+    """
+    If there is no source file the watch command should complain.
+    """
+    with pytest.raises(ValueError):
+        uflash.watch_file(None, lambda: "should never be called!")
+
+
+@mock.patch('uflash.time')
+@mock.patch('uflash.os')
+def test_watch_file(mock_os, mock_time):
+    """
+    Make sure that the callback is called each time the file changes.
+    """
+    # Our function will throw KeyboardInterrupt when called for the 2nd time,
+    # ending the watching gracefully.This will help in testing the
+    # watch_file function.
+    call_count = [0]
+
+    def func():
+        call_count[0] = call_count[0] + 1
+        if call_count[0] == 2:
+            raise KeyboardInterrupt()
+
+    # Instead of modifying any file, let's change the return value of
+    # os.path.getmtime. Start with initial value of 0.
+    mock_os.path.getmtime.return_value = 0
+
+    t = threading.Thread(target=uflash.watch_file,
+                         args=('path/to/file', func))
+    t.start()
+    time.sleep(0.01)
+    mock_os.path.getmtime.return_value = 1  # Simulate file change
+    time.sleep(0.01)
+    assert t.is_alive()
+    assert call_count[0] == 1
+    mock_os.path.getmtime.return_value = 2  # Simulate file change
+    t.join()
+    assert call_count[0] == 2
