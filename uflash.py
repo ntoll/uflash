@@ -12,6 +12,7 @@ import os
 import struct
 import sys
 from subprocess import check_output
+import time
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -291,6 +292,27 @@ def extract(path_to_hex, output_path=None):
             print(python_script)
 
 
+def watch_file(path, func, *args, **kwargs):
+    """
+    Watch a file for changes by polling its last modification time. Call the
+    provided function with *args and **kwargs upon modification.
+    """
+    if not path:
+        raise ValueError('Please specify a file to watch')
+    print('Watching "{}" for changes'.format(path))
+    last_modification_time = os.path.getmtime(path)
+    try:
+        while True:
+            time.sleep(1)
+            new_modification_time = os.path.getmtime(path)
+            if new_modification_time == last_modification_time:
+                continue
+            func(*args, **kwargs)
+            last_modification_time = new_modification_time
+    except KeyboardInterrupt:
+        pass
+
+
 def main(argv=None):
     """
     Entry point for the command line tool 'uflash'.
@@ -316,10 +338,18 @@ def main(argv=None):
                             action='store_true',
                             help=("Extract python source from a hex file"
                                   " instead of creating the hex file."), )
+        parser.add_argument('-w', '--watch',
+                            action='store_true',
+                            help='Watch the source file for changes.')
         args = parser.parse_args(argv)
 
         if args.extract:
             extract(args.source, args.target)
+        elif args.watch:
+            watch_file(args.source, flash,
+                       path_to_python=args.source,
+                       paths_to_microbits=args.target,
+                       path_to_runtime=args.runtime)
         else:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
                   path_to_runtime=args.runtime)

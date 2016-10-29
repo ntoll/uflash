@@ -68,6 +68,15 @@ the path to the Python script in as the first argument to the command::
     $ uflash my_script.py
     Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
 
+You can let uflash watch for changes of your script. It will be flashed
+automatically every time you save it::
+
+    $ uflash -w my_script.py
+
+or::
+
+    $ uflash --watch my_script.py
+
 At this point uflash will try to automatically detect the path to the device.
 However, if you have several devices plugged in and/or know what the path on
 the filesystem to the BBC micro:bit already is, you can specify this as a
@@ -135,4 +144,3 @@ with development. Typing ``make`` on its own will list the options thus::
     make package - create a deployable package for the project.
     make publish - publish the project to PyPI.
     make docs - run sphinx to create project documentation.
-
