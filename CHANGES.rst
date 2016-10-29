@@ -1,7 +1,7 @@
 Release History
 ===============
 
-1.0.6
+1.0.7
 -----
 
 * Watch for changes in a script. Automatically flash on save.
