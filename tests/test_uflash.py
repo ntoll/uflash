@@ -359,8 +359,8 @@ def test_flash_wrong_python():
     Python 3.
     """
     for version in [(2, 6, 3), (3, 2, 0)]:
-        with mock.patch('sys.version_info', version):
-            with pytest.raises(RuntimeError) as ex:
+        with pytest.raises(RuntimeError) as ex:
+            with mock.patch('sys.version_info', version):
                 uflash.flash()
             assert 'Will only run on Python ' in ex.value.args[0]
 
