@@ -67,6 +67,15 @@ def test_unhexlify():
     assert unhexlified == TEST_SCRIPT.decode('utf-8')
 
 
+def test_unhexlify_not_python():
+    """
+    Test that the MicroPython script start format is present.
+    """
+    bad_hex = uflash.unhexlify(
+            ':020000040003F7\n:10E000000000000000000000000000000000000010')
+    assert bad_hex == ''
+
+
 def test_hexlify_empty_script():
     """
     The function returns an empty string if the script is empty.
