@@ -142,23 +142,19 @@ def extract_script(embedded_hex):
     Returns a string containing the original embedded script.
     """
     hex_lines = embedded_hex.split('\n')
-    script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xffff)[2:].zfill(4).upper()
-    script_addr_low = hex(_SCRIPT_ADDR & 0xffff)[2:].zfill(4).upper()
+    script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xffff)[2:].upper().zfill(4)
+    script_addr_low = hex(_SCRIPT_ADDR & 0xffff)[2:].upper().zfill(4)
     start_script = None
     within_range = False
-
+    # Look for the script start address
     for loc, val in enumerate(hex_lines):
         if val[0:9] == ':02000004':
-            # Reach an extended address jump, check if within script range
-            if val[9:13].upper() == script_addr_high:
-                within_range = True
-            else:
-                within_range = False
+            # Reached an extended address record, check if within script range
+            within_range = val[9:13].upper() == script_addr_high
         elif within_range and val[0:3] == ':10' and \
                 val[3:7].upper() == script_addr_low:
             start_script = loc
             break
-
     if start_script:
         # Find the end of the script
         end_script = None
@@ -169,7 +165,6 @@ def extract_script(embedded_hex):
         # Pass the extracted hex through unhexlify
         return unhexlify('\n'.join(
                 hex_lines[start_script - 1:end_script if end_script else -3]))
-
     return ''
 
 
