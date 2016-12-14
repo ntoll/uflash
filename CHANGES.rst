@@ -1,6 +1,11 @@
 Release History
 ===============
 
+1.0.8
+-----
+
+* Refactor if hex extraction to not depend on extended address record before script (thanks Carlos).
+
 1.0.7
 -----
 
