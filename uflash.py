@@ -164,7 +164,7 @@ def extract_script(embedded_hex):
                 break
         # Pass the extracted hex through unhexlify
         return unhexlify('\n'.join(
-                hex_lines[start_script - 1:end_script if end_script else -3]))
+            hex_lines[start_script - 1:end_script if end_script else -3]))
     return ''
 
 
