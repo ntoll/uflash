@@ -67,6 +67,22 @@ def test_unhexlify():
     assert unhexlified == TEST_SCRIPT.decode('utf-8')
 
 
+def test_unhexlify_not_python():
+    """
+    Test that the MicroPython script start format is present.
+    """
+    assert '' == uflash.unhexlify(
+           ':020000040003F7\n:10E000000000000000000000000000000000000010')
+
+
+def test_unhexlify_bad_unicode():
+    """
+    Test that invalid Unicode is dealt gracefully returning an empty string.
+    """
+    assert '' == uflash.unhexlify(
+           ':020000040003F7\n:10E000004D50FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+
+
 def test_hexlify_empty_script():
     """
     The function returns an empty string if the script is empty.
@@ -118,6 +134,21 @@ def test_extract():
     """
     python = uflash.hexlify(TEST_SCRIPT)
     result = uflash.embed_hex(uflash._RUNTIME, python)
+    extracted = uflash.extract_script(result)
+    assert extracted == TEST_SCRIPT.decode('utf-8')
+
+
+def test_extract_sandwiched():
+    """
+    The script hex is packed with additional data above and bellow and should
+    still be returned as a the original string only.
+    """
+    python = uflash.hexlify(TEST_SCRIPT)
+    python_hex_lines = python.split('\n')
+    python_sandwiched = [python_hex_lines[0]] + \
+        [':10DFE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF41'] + \
+        python_hex_lines[1:] + [':10E50000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1B']
+    result = uflash.embed_hex(uflash._RUNTIME, '\n'.join(python_sandwiched))
     extracted = uflash.extract_script(result)
     assert extracted == TEST_SCRIPT.decode('utf-8')
 

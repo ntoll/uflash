@@ -90,7 +90,10 @@ def unhexlify(blob):
     for line in lines:
         # Discard the address, length etc. and reverse the hexlification
         output.append(binascii.unhexlify(line[9:-2]))
-    # Strip off "MP<size>" from the start
+    # Check the header is correct ("MP<size>")
+    if (output[0][0:2].decode('utf-8') != u'MP'):
+        return ''
+    # Strip off header
     output[0] = output[0][4:]
     # and strip any null bytes from the end
     output[-1] = output[-1].strip(b'\x00')
@@ -139,19 +142,30 @@ def extract_script(embedded_hex):
     Returns a string containing the original embedded script.
     """
     hex_lines = embedded_hex.split('\n')
-    # Blob will hold the extracted hex values representing the embedded script.
-    blob = ''
-    # Find the marker in the hex that comes just before the script
-    if ':020000040003F7' in hex_lines:
-        start_line = max(loc for loc, val in enumerate(hex_lines)
-                         if val == ':020000040003F7')
-        # Recombine the lines after that, but leave out the last 3 lines
-        blob = '\n'.join(hex_lines[start_line:-3])
-    if blob == '':
-        # If the result is the empty string, there was no embedded script
-        return ''
-    # Pass the extracted hex through unhexlify
-    return unhexlify(blob)
+    script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xffff)[2:].upper().zfill(4)
+    script_addr_low = hex(_SCRIPT_ADDR & 0xffff)[2:].upper().zfill(4)
+    start_script = None
+    within_range = False
+    # Look for the script start address
+    for loc, val in enumerate(hex_lines):
+        if val[0:9] == ':02000004':
+            # Reached an extended address record, check if within script range
+            within_range = val[9:13].upper() == script_addr_high
+        elif within_range and val[0:3] == ':10' and \
+                val[3:7].upper() == script_addr_low:
+            start_script = loc
+            break
+    if start_script:
+        # Find the end of the script
+        end_script = None
+        for loc, val in enumerate(hex_lines[start_script:]):
+            if val[9:41] == 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF':
+                end_script = loc + start_script
+                break
+        # Pass the extracted hex through unhexlify
+        return unhexlify('\n'.join(
+            hex_lines[start_script - 1:end_script if end_script else -3]))
+    return ''
 
 
 def find_microbit():
