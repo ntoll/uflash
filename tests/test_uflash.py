@@ -429,6 +429,13 @@ def test_main_first_arg_help():
         uflash.main(argv=['--help'])
         mock_ap.assert_called_once_with(description=uflash._HELP_TEXT)
 
+def test_main_first_arg_version():
+    """
+    If there is a single argument of "--version", it prints the version.
+    """
+    with mock.patch('uflash.get_version') as mock_ver:
+        uflash.main(argv=['--version'])
+        mock_ver.assert_called_once()
 
 def test_main_first_arg_not_python():
     """
