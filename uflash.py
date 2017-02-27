@@ -355,6 +355,8 @@ def main(argv=None):
         parser.add_argument('-w', '--watch',
                             action='store_true',
                             help='Watch the source file for changes.')
+        parser.add_argument('--version', action='version',
+                            version='%(prog)s ' + get_version())
         args = parser.parse_args(argv)
 
         if args.extract:
