@@ -430,6 +430,15 @@ def test_main_first_arg_help():
         mock_ap.assert_called_once_with(description=uflash._HELP_TEXT)
 
 
+def test_main_first_arg_version():
+    """
+    If there is a single argument of "--version", it prints the version.
+    """
+    with mock.patch('uflash.get_version') as mock_ver:
+        uflash.main(argv=['--version'])
+        assert mock_ver.call_count == 1
+
+
 def test_main_first_arg_not_python():
     """
     If the first argument does not end in ".py" then it should display a useful
