@@ -457,10 +457,11 @@ def test_main_first_arg_version():
 def test_main_first_arg_not_python():
     """
     If the first argument does not end in ".py" then it should display a useful
-    error message.
+    error message and exit.
     """
     with mock.patch.object(builtins, 'print') as mock_print:
-        uflash.main(argv=['foo.bar'])
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['foo.bar'])
         error = mock_print.call_args[0][0]
         assert isinstance(error, ValueError)
         assert error.args[0] == 'Python files must end in ".py".'
@@ -626,3 +627,9 @@ def test_watch_file(mock_os, mock_time):
     mock_os.path.getmtime.return_value = 2  # Simulate file change
     t.join()
     assert call_count[0] == 2
+
+
+@mock.patch('uflash.flash', side_effect=RuntimeError('Flashing failed!'))
+def test_non_zero_exit_code_on_exception(mock_flash):
+    with pytest.raises(SystemExit):
+        uflash.main()

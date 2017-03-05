@@ -372,6 +372,7 @@ def main(argv=None):
     except Exception as ex:
         # The exception of no return. Print the exception information.
         print(ex)
+        sys.exit(1)
 
 
 #: A string representation of the MicroPython runtime hex.
