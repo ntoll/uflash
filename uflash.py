@@ -242,13 +242,16 @@ def save_hex(hex_file, path):
         output.write(hex_file.encode('ascii'))
 
 
-def flash(path_to_python=None, paths_to_microbits=None, path_to_runtime=None):
+def flash(path_to_python=None, python_script=None,
+          paths_to_microbits=None, path_to_runtime=None):
     """
-    Given a path to a Python file will attempt to create a hex file and then
-    flash it onto the referenced BBC micro:bit.
+    Given a path to or source of a Python file will attempt to create a hex
+    file and then flash it onto the referenced BBC micro:bit.
 
-    If the path_to_python is unspecified it will simply flash the unmodified
-    MicroPython runtime onto the device.
+    If the path_to_python & python_script are unspecified it will simply flash
+    the unmodified MicroPython runtime onto the device.
+
+    python_script should be a bytes object representing a UTF-8 encoded string
 
     If paths_to_microbits is unspecified it will attempt to find the device's
     path on the filesystem automatically.
@@ -270,6 +273,9 @@ def flash(path_to_python=None, paths_to_microbits=None, path_to_runtime=None):
             raise ValueError('Python files must end in ".py".')
         with open(path_to_python, 'rb') as python_script:
             python_hex = hexlify(python_script.read())
+    elif python_script:
+        python_hex = hexlify(python_script)
+
     runtime = _RUNTIME
     # Load the hex for the runtime.
     if path_to_runtime:
