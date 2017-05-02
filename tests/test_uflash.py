@@ -373,6 +373,19 @@ def test_flash_with_path_to_runtime():
                     mock_save.assert_called_once_with('foo', expected_hex_path)
 
 
+def test_flash_with_python_script():
+    """
+    If a byte representation of a Python script is passed into the function it
+    should hexlify that.
+    """
+    python_script = b'import this'
+    with mock.patch('uflash.save_hex'):
+        with mock.patch('uflash.find_microbit', return_value='bar'):
+            with mock.patch('uflash.hexlify') as mock_hexlify:
+                uflash.flash(python_script=python_script)
+                mock_hexlify.assert_called_once_with(python_script)
+
+
 def test_flash_cannot_find_microbit():
     """
     Ensure an IOError is raised if it is not possible to find the micro:bit.
