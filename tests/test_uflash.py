@@ -434,31 +434,47 @@ def test_main_first_arg_python():
                                            path_to_runtime=None)
 
 
-def test_main_first_arg_help():
+@mock.patch('uflash.sys.stdout')
+def test_main_first_arg_help(mock_stdout):
     """
-    If there is a single argument of "--help", it prints some help.
+    If there is a single argument of "--help", it prints some help and exits.
     """
-    with mock.patch('uflash.argparse.ArgumentParser') as mock_ap:
+    with pytest.raises(SystemExit):
         uflash.main(argv=['--help'])
-        mock_ap.assert_called_once_with(description=uflash._HELP_TEXT)
+    # argparse manipulates the help text (e.g. changes line wrap)
+    # so it isn't trivial to compare the output to uflash._HELP_TEXT.
+    expected = 'Flash Python onto the BBC micro:bit'
+    got = mock_stdout.write.call_args[0][0]
+    assert expected in got
 
 
 def test_main_first_arg_version():
     """
-    If there is a single argument of "--version", it prints the version.
+    If there is a single argument of "--version", it prints the version
+    and exits.
     """
-    with mock.patch('uflash.get_version') as mock_ver:
-        uflash.main(argv=['--version'])
-        assert mock_ver.call_count == 1
+    # On python 2 --version prints to stderr. On python 3 to stdout.
+    # https://bugs.python.org/issue18920
+    if sys.version_info.major == 2:
+        to_patch = 'uflash.sys.stderr'
+    else:
+        to_patch = 'uflash.sys.stdout'
+    with mock.patch(to_patch) as output:
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['--version'])
+        expected = uflash.get_version()
+        got = output.write.call_args[0][0]
+        assert expected in got
 
 
 def test_main_first_arg_not_python():
     """
     If the first argument does not end in ".py" then it should display a useful
-    error message.
+    error message and exit.
     """
     with mock.patch.object(builtins, 'print') as mock_print:
-        uflash.main(argv=['foo.bar'])
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['foo.bar'])
         error = mock_print.call_args[0][0]
         assert isinstance(error, ValueError)
         assert error.args[0] == 'Python files must end in ".py".'
@@ -624,3 +640,9 @@ def test_watch_file(mock_os, mock_time):
     mock_os.path.getmtime.return_value = 2  # Simulate file change
     t.join()
     assert call_count[0] == 2
+
+
+@mock.patch('uflash.flash', side_effect=RuntimeError('Flashing failed!'))
+def test_non_zero_exit_code_on_exception(mock_flash):
+    with pytest.raises(SystemExit):
+        uflash.main()
