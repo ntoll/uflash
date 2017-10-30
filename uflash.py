@@ -66,7 +66,9 @@ def hexlify(script):
     data = b'MP' + struct.pack('<H', len(script)) + script
     # Padding with null bytes in a 2/3 compatible way
     data = data + (b'\x00' * (16 - len(data) % 16))
-    assert len(data) <= 0x2000
+    if len(data) > 8192:
+        # 'MP' = 2 bytes, script length is another 2 bytes.
+        raise ValueError("Python script must be less than 8188 bytes.")
     # Convert to .hex format.
     output = [':020000040003F7']  # extended linear address, 0x0003.
     addr = _SCRIPT_ADDR
@@ -348,36 +350,62 @@ def main(argv=None):
     """
     if not argv:
         argv = sys.argv[1:]
-    try:
-        parser = argparse.ArgumentParser(description=_HELP_TEXT)
-        parser.add_argument('source', nargs='?', default=None)
-        parser.add_argument('target', nargs='*', default=None)
-        parser.add_argument('-r', '--runtime', default=None,
-                            help="Use the referenced MicroPython runtime.")
-        parser.add_argument('-e', '--extract',
-                            action='store_true',
-                            help=("Extract python source from a hex file"
-                                  " instead of creating the hex file."), )
-        parser.add_argument('-w', '--watch',
-                            action='store_true',
-                            help='Watch the source file for changes.')
-        parser.add_argument('--version', action='version',
-                            version='%(prog)s ' + get_version())
-        args = parser.parse_args(argv)
 
-        if args.extract:
+    parser = argparse.ArgumentParser(description=_HELP_TEXT)
+    parser.add_argument('source', nargs='?', default=None)
+    parser.add_argument('target', nargs='*', default=None)
+    parser.add_argument('-r', '--runtime', default=None,
+                        help="Use the referenced MicroPython runtime.")
+    parser.add_argument('-e', '--extract',
+                        action='store_true',
+                        help=("Extract python source from a hex file"
+                              " instead of creating the hex file."), )
+    parser.add_argument('-w', '--watch',
+                        action='store_true',
+                        help='Watch the source file for changes.')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + get_version())
+    args = parser.parse_args(argv)
+
+    if args.extract:
+        try:
             extract(args.source, args.target)
-        elif args.watch:
+        except Exception as ex:
+            error_message = "Error extracting {source}: {error!s}"
+            print(error_message.format(source=args.source, error=ex),
+                  file=sys.stderr)
+            sys.exit(1)
+
+    elif args.watch:
+        try:
             watch_file(args.source, flash,
                        path_to_python=args.source,
                        paths_to_microbits=args.target,
                        path_to_runtime=args.runtime)
-        else:
+        except Exception as ex:
+            error_message = "Error watching {source}: {error!s}"
+            print(error_message.format(source=args.source, error=ex),
+                  file=sys.stderr)
+            sys.exit(1)
+
+    else:
+        try:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
                   path_to_runtime=args.runtime)
-    except Exception as ex:
-        # The exception of no return. Print the exception information.
-        print(ex)
+        except Exception as ex:
+            error_message = (
+                "Error flashing {source} to {target}{runtime}: {error!s}"
+            )
+            source = args.source
+            target = args.target if args.target else "microbit"
+            if args.runtime:
+                runtime = "with runtime {runtime}".format(runtime=args.runtime)
+            else:
+                runtime = ""
+            print(error_message.format(source=source, target=target,
+                                       runtime=runtime, error=ex),
+                  file=sys.stderr)
+            sys.exit(1)
 
 
 #: A string representation of the MicroPython runtime hex.
