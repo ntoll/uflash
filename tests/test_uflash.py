@@ -434,34 +434,117 @@ def test_main_first_arg_python():
                                            path_to_runtime=None)
 
 
-def test_main_first_arg_help():
+def test_main_first_arg_help(capsys):
     """
-    If there is a single argument of "--help", it prints some help.
+    If there is a single argument of "--help", it prints some help and exits.
     """
-    with mock.patch('uflash.argparse.ArgumentParser') as mock_ap:
+    with pytest.raises(SystemExit):
         uflash.main(argv=['--help'])
-        mock_ap.assert_called_once_with(description=uflash._HELP_TEXT)
+
+    stdout, _ = capsys.readouterr()
+    # argparse manipulates the help text (e.g. changes line wrap)
+    # so it isn't trivial to compare the output to uflash._HELP_TEXT.
+    expected = 'Flash Python onto the BBC micro:bit'
+    assert expected in stdout
 
 
-def test_main_first_arg_version():
+def test_main_first_arg_version(capsys):
     """
-    If there is a single argument of "--version", it prints the version.
+    If there is a single argument of "--version", it prints the version
+    and exits.
     """
-    with mock.patch('uflash.get_version') as mock_ver:
+    with pytest.raises(SystemExit):
         uflash.main(argv=['--version'])
-        assert mock_ver.call_count == 1
+
+    stdout, stderr = capsys.readouterr()
+    expected = uflash.get_version()
+    # On python 2 --version prints to stderr. On python 3 to stdout.
+    # https://bugs.python.org/issue18920
+    assert (expected in stdout) or (expected in stderr)
 
 
-def test_main_first_arg_not_python():
+def test_main_first_arg_not_python(capsys):
     """
     If the first argument does not end in ".py" then it should display a useful
     error message.
     """
-    with mock.patch.object(builtins, 'print') as mock_print:
+    with pytest.raises(SystemExit):
         uflash.main(argv=['foo.bar'])
-        error = mock_print.call_args[0][0]
-        assert isinstance(error, ValueError)
-        assert error.args[0] == 'Python files must end in ".py".'
+
+    _, stderr = capsys.readouterr()
+    expected = 'Python files must end in ".py".'
+    assert expected in stderr
+
+
+def test_flash_raises(capsys):
+    """
+    If the flash system goes wrong, it should say that's what happened
+    """
+    with mock.patch('uflash.flash', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['test.py'])
+
+    _, stderr = capsys.readouterr()
+    expected = 'Error flashing test.py'
+    assert expected in stderr
+
+
+def test_flash_raises_with_info(capsys):
+    """
+    When flash goes wrong it should mention everything you tell it
+    """
+    with mock.patch('uflash.flash', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['test.py'])
+
+    _, stderr = capsys.readouterr()
+    expected = 'Error flashing test.py to microbit: boom\n'
+    assert stderr == expected
+
+    with mock.patch('uflash.flash', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['test.py', 'D:\\'])
+
+    _, stderr = capsys.readouterr()
+    expected = 'Error flashing test.py to ' + repr(['D:\\']) + ': boom\n'
+    assert stderr == expected
+
+    with mock.patch('uflash.flash', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['-r', 'foo.hex', 'test.py', 'D:\\'])
+
+    _, stderr = capsys.readouterr()
+    expected = (
+        'Error flashing test.py to ' + repr(['D:\\']) +
+        'with runtime foo.hex: boom\n'
+    )
+    assert stderr == expected
+
+
+def test_watch_raises(capsys):
+    """
+    If the watch system goes wrong, it should say that's what happened
+    """
+    with mock.patch('uflash.watch_file', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['--watch', 'test.py'])
+
+    _, stderr = capsys.readouterr()
+    expected = 'Error watching test.py'
+    assert expected in stderr
+
+
+def test_extract_raises(capsys):
+    """
+    If the extract system goes wrong, it should say that's what happened
+    """
+    with mock.patch('uflash.extract', side_effect=RuntimeError("boom")):
+        with pytest.raises(SystemExit):
+            uflash.main(argv=['--extract', 'test.py'])
+
+    _, stderr = capsys.readouterr()
+    expected = 'Error extracting test.py'
+    assert expected in stderr
 
 
 def test_main_two_args():
