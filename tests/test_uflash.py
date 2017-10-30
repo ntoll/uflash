@@ -707,3 +707,10 @@ def test_watch_file(mock_os, mock_time):
     mock_os.path.getmtime.return_value = 2  # Simulate file change
     t.join()
     assert call_count[0] == 2
+
+
+def test_hexlify_validates_script_length():
+    input = b"A" * 8193
+    with pytest.raises(ValueError) as excinfo:
+        uflash.hexlify(input)
+    assert str(excinfo.value) == "Python script must be less than 8188 bytes."
