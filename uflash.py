@@ -66,9 +66,7 @@ def hexlify(script):
     data = b'MP' + struct.pack('<H', len(script)) + script
     # Padding with null bytes in a 2/3 compatible way
     data = data + (b'\x00' * (16 - len(data) % 16))
-    if len(data) > 8192:
-        # 'MP' = 2 bytes, script length is another 2 bytes.
-        raise ValueError("Python script must be less than 8188 bytes.")
+    assert len(data) <= 0x2000
     # Convert to .hex format.
     output = [':020000040003F7']  # extended linear address, 0x0003.
     addr = _SCRIPT_ADDR
