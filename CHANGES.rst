@@ -1,6 +1,15 @@
 Release History
 ===============
 
+1.1.0
+-----
+
+* Update to latest version of MicroPython for the BBC micro:bit (many thanks to Damien George for his amazing efforts!).
+* Add a --version flag to uflash that causes it to print the current version number (many thanks to Lenz Grimmer for this work).
+* Allow uflash to accept the content of a script as well as the path to a script (many thanks to Zander Brown for this work).
+* Ensure uflash works nicely / better with external tools (many thanks to Lex Robinson for this work).
+* Added copyright and license information to the start of the script.
+
 1.0.8
 -----
 

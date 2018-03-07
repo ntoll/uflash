@@ -54,6 +54,10 @@ or::
 
     $ uflash -h
 
+To discover the version information type::
+
+    $ uflash --version
+
 If you type the command on its own then uflash will attempt to find a connected
 BBC micro:bit and flash an unmodified default version of the MicroPython
 runtime onto it::

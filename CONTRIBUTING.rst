@@ -30,7 +30,7 @@ confirming that they have the authority to submit the contribution and place it
 under the license as defined in the LICENSE file found within this repository.
 
 Checklist
-+++++++++
+---------
 
 * Your code should be commented in *plain English* (British spelling).
 * If your contribution is for a major block of work and you've not done so

@@ -6,3 +6,4 @@ uflash.egg-info/*
 dist/*
 build/*
 .tox
+docs/_build/*
