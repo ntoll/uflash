@@ -15,12 +15,18 @@ from __future__ import print_function
 import argparse
 import binascii
 import ctypes
-import nudatus
 import os
 import struct
 import sys
 from subprocess import check_output
 import time
+
+# nudatus is an optional dependancy
+can_minify = True
+try:
+    import nudatus
+except ImportError:  # pragma: no cover
+    can_minify = False
 
 #: The magic start address in flash memory for a Python script.
 _SCRIPT_ADDR = 0x3e000
@@ -71,7 +77,7 @@ def hexlify(script):
     # Convert line endings in case the file was created on Windows.
     script = script.replace(b'\r\n', b'\n')
     script = script.replace(b'\r', b'\n')
-    if len(script) > _MAX_SIZE:
+    if can_minify and len(script) > _MAX_SIZE:
         script = nudatus.mangle(script)
     # Add header, pad to multiple of 16 bytes.
     data = b'MP' + struct.pack('<H', len(script)) + script
