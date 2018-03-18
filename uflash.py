@@ -15,6 +15,7 @@ from __future__ import print_function
 import argparse
 import binascii
 import ctypes
+import nudatus 
 import os
 import struct
 import sys
@@ -41,6 +42,7 @@ Documentation is here: https://uflash.readthedocs.io/en/latest/
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
 _VERSION = (1, 1, 0, )
+_MAX_SIZE = 8188
 
 
 def get_version():
@@ -69,11 +71,13 @@ def hexlify(script):
     # Convert line endings in case the file was created on Windows.
     script = script.replace(b'\r\n', b'\n')
     script = script.replace(b'\r', b'\n')
+    if len(script) > _MAX_SIZE:
+        script = nudatus.mangle(script)
     # Add header, pad to multiple of 16 bytes.
     data = b'MP' + struct.pack('<H', len(script)) + script
     # Padding with null bytes in a 2/3 compatible way
     data = data + (b'\x00' * (16 - len(data) % 16))
-    if len(data) > 8192:
+    if len(data) > _MAX_SIZE:
         # 'MP' = 2 bytes, script length is another 2 bytes.
         raise ValueError("Python script must be less than 8188 bytes.")
     # Convert to .hex format.
