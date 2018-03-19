@@ -44,6 +44,17 @@ def test_get_version():
     assert result == '.'.join([str(i) for i in uflash._VERSION])
 
 
+def test_get_minifier():
+    """
+    When a minifier was loaded a string identifing it should be
+    returned, otherwise None
+    """
+    with mock.patch('uflash.can_minify', False):
+        assert uflash.get_minifier() is None
+    with mock.patch('uflash.can_minify', True):
+        assert len(uflash.get_minifier()) > 0
+
+
 def test_hexlify():
     """
     Ensure we get the expected .hex encoded result from a "good" call to the
@@ -383,7 +394,7 @@ def test_flash_with_python_script():
         with mock.patch('uflash.find_microbit', return_value='bar'):
             with mock.patch('uflash.hexlify') as mock_hexlify:
                 uflash.flash(python_script=python_script)
-                mock_hexlify.assert_called_once_with(python_script)
+                mock_hexlify.assert_called_once_with(python_script, False)
 
 
 def test_flash_cannot_find_microbit():
@@ -409,6 +420,25 @@ def test_flash_wrong_python():
             assert 'Will only run on Python ' in ex.value.args[0]
 
 
+def test_hexlify_minify_without_minifier():
+    """
+    When minification but no minifier is available a ValueError
+    should be raised
+    """
+    with pytest.raises(ValueError):
+        with mock.patch('uflash.can_minify', False):
+            uflash.hexlify(TEST_SCRIPT, minify=True)
+
+
+def test_hexlify_minify():
+    """
+    Check mangle is called as expected
+    """
+    with mock.patch('nudatus.mangle') as mangle:
+        uflash.hexlify(TEST_SCRIPT, minify=True)
+        mangle.assert_called_once_with(TEST_SCRIPT.decode('utf-8'))
+
+
 def test_main_no_args():
     """
     If there are no args into the main function, it simply calls flash with
@@ -419,7 +449,8 @@ def test_main_no_args():
             uflash.main()
             mock_flash.assert_called_once_with(path_to_python=None,
                                                paths_to_microbits=[],
-                                               path_to_runtime=None)
+                                               path_to_runtime=None,
+                                               minify=False)
 
 
 def test_main_first_arg_python():
@@ -431,7 +462,8 @@ def test_main_first_arg_python():
         uflash.main(argv=['foo.py'])
         mock_flash.assert_called_once_with(path_to_python='foo.py',
                                            paths_to_microbits=[],
-                                           path_to_runtime=None)
+                                           path_to_runtime=None,
+                                           minify=False)
 
 
 def test_main_first_arg_help(capsys):
@@ -557,7 +589,8 @@ def test_main_two_args():
         mock_flash.assert_called_once_with(
             path_to_python='foo.py',
             paths_to_microbits=['/media/foo/bar'],
-            path_to_runtime=None)
+            path_to_runtime=None,
+            minify=False)
 
 
 def test_main_multiple_microbits():
@@ -572,7 +605,8 @@ def test_main_multiple_microbits():
             path_to_python='foo.py',
             paths_to_microbits=[
                 '/media/foo/bar', '/media/foo/baz', '/media/foo/bob'],
-            path_to_runtime=None)
+            path_to_runtime=None,
+            minify=False)
 
 
 def test_main_runtime():
@@ -585,7 +619,8 @@ def test_main_runtime():
         mock_flash.assert_called_once_with(
             path_to_python='foo.py',
             paths_to_microbits=['/media/foo/bar'],
-            path_to_runtime='baz.hex')
+            path_to_runtime='baz.hex',
+            minify=False)
 
 
 def test_main_named_args():
@@ -596,7 +631,8 @@ def test_main_named_args():
         uflash.main(argv=['-r', 'baz.hex'])
         mock_flash.assert_called_once_with(path_to_python=None,
                                            paths_to_microbits=[],
-                                           path_to_runtime='baz.hex')
+                                           path_to_runtime='baz.hex',
+                                           minify=False)
 
 
 def test_main_watch_flag():
