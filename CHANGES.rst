@@ -1,6 +1,13 @@
 Release History
 ===============
 
+1.1.1
+-----
+
+* Update to the latest version of MicroPython for the BBC micro:bit -- fixes a
+  bug relating to flooding and the radio module. As always, many thanks to
+  Damien George for his work on MicroPython.
+
 1.1.0
 -----
 
