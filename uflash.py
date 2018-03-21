@@ -47,7 +47,7 @@ Documentation is here: https://uflash.readthedocs.io/en/latest/
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
-_VERSION = (1, 1, 1, )
+_VERSION = (1, 1, 2, )
 _MAX_SIZE = 8188
 
 
