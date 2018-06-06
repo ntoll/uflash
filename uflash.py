@@ -243,6 +243,11 @@ def find_microbit():
         try:
             for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 path = '{}:\\'.format(disk)
+                #
+                # Don't bother looking if the drive isn't removable
+                #
+                if ctypes.windll.kernel32.GetDriveTypeW(path) != 2:
+                    continue
                 if (os.path.exists(path) and
                         get_volume_name(path) == 'MICROBIT'):
                     return path

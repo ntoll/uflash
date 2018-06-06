@@ -212,6 +212,11 @@ def test_find_microbit_nt_exists():
     mock_windll.kernel32 = mock.MagicMock()
     mock_windll.kernel32.GetVolumeInformationW = mock.MagicMock()
     mock_windll.kernel32.GetVolumeInformationW.return_value = None
+    #
+    # Have every drive claim to be removable
+    #
+    mock_windll.kernel32.GetDriveTypeW = mock.MagicMock()
+    mock_windll.kernel32.GetDriveTypeW.return_value = 2
     with mock.patch('os.name', 'nt'):
         with mock.patch('os.path.exists', return_value=True):
             return_value = ctypes.create_unicode_buffer('MICROBIT')
