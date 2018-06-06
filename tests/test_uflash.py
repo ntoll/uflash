@@ -239,6 +239,35 @@ def test_find_microbit_nt_missing():
                 assert uflash.find_microbit() is None
 
 
+def test_find_microbit_nt_removable_only():
+    """
+    We should only be considering removable drives as candidates for
+    micro:bit devices. (Especially so as to avoid interrogating disconnected
+    network drives).
+
+    Have every drive claim to be a micro:bit, but only drive B: claim
+    to be removable
+    """
+    def _drive_type(letter):
+        if letter == "B:\\":
+            return 2 # removable
+        else:
+            return 4 # network
+
+    mock_windll = mock.MagicMock()
+    mock_windll.kernel32 = mock.MagicMock()
+    mock_windll.kernel32.GetVolumeInformationW = mock.MagicMock()
+    mock_windll.kernel32.GetVolumeInformationW.return_value = None
+    mock_windll.kernel32.GetDriveTypeW = mock.MagicMock()
+    mock_windll.kernel32.GetDriveTypeW.side_effect = _drive_type
+    with mock.patch('os.name', 'nt'):
+        with mock.patch('os.path.exists', return_value=True):
+            return_value = ctypes.create_unicode_buffer('MICROBIT')
+            with mock.patch('ctypes.create_unicode_buffer',
+                            return_value=return_value):
+                ctypes.windll = mock_windll
+                assert uflash.find_microbit() == 'B:\\'
+
 def test_find_microbit_unknown_os():
     """
     Raises a NotImplementedError if the host OS is not supported.
