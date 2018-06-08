@@ -255,9 +255,9 @@ def test_find_microbit_nt_removable_only():
     """
     def _drive_type(letter):
         if letter == "B:\\":
-            return 2 # removable
+            return 2  # removable
         else:
-            return 4 # network
+            return 4  # network
 
     mock_windll = mock.MagicMock()
     mock_windll.kernel32 = mock.MagicMock()
@@ -272,6 +272,7 @@ def test_find_microbit_nt_removable_only():
                             return_value=return_value):
                 ctypes.windll = mock_windll
                 assert uflash.find_microbit() == 'B:\\'
+
 
 def test_find_microbit_unknown_os():
     """
@@ -580,10 +581,8 @@ def test_flash_raises_with_info(capsys):
             uflash.main(argv=['-r', 'foo.hex', 'test.py', 'D:\\'])
 
     _, stderr = capsys.readouterr()
-    expected = (
-        'Error flashing test.py to ' + repr(['D:\\']) +
-        'with runtime foo.hex: boom\n'
-    )
+    expected = 'Error flashing test.py to ' + repr(['D:\\']) + \
+               'with runtime foo.hex: boom\n'
     assert stderr == expected
 
 
