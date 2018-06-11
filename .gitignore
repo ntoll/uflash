@@ -8,3 +8,4 @@ build/*
 .tox
 docs/_build/*
 .idea/*
+.pytest_cache/
