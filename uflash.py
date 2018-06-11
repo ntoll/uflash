@@ -303,9 +303,9 @@ def flash(path_to_python=None, paths_to_microbits=None,
         raise RuntimeError('Will only run on Python 2.7, or 3.3 and later.')
     # Grab the Python script (if needed).
     python_hex = ''
-    (script_path, script_name) = os.path.split(path_to_python)
-    (script_name_root, script_name_ext) = os.path.splitext(script_name)
     if path_to_python:
+        (script_path, script_name) = os.path.split(path_to_python)
+        (script_name_root, script_name_ext) = os.path.splitext(script_name)
         if not path_to_python.endswith('.py'):
             raise ValueError('Python files must end in ".py".')
         with open(path_to_python, 'rb') as python_script:
