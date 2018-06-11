@@ -450,7 +450,8 @@ def test_main_no_args():
             mock_flash.assert_called_once_with(path_to_python=None,
                                                paths_to_microbits=[],
                                                path_to_runtime=None,
-                                               minify=False)
+                                               minify=False,
+                                               keepname=False)
 
 
 def test_main_first_arg_python():
@@ -463,7 +464,8 @@ def test_main_first_arg_python():
         mock_flash.assert_called_once_with(path_to_python='foo.py',
                                            paths_to_microbits=[],
                                            path_to_runtime=None,
-                                           minify=False)
+                                           minify=False,
+                                           keepname=False)
 
 
 def test_main_first_arg_help(capsys):
@@ -506,6 +508,7 @@ def test_main_first_arg_not_python(capsys):
     _, stderr = capsys.readouterr()
     expected = 'Python files must end in ".py".'
     assert expected in stderr
+
 
 
 def test_flash_raises(capsys):
@@ -590,7 +593,8 @@ def test_main_two_args():
             path_to_python='foo.py',
             paths_to_microbits=['/media/foo/bar'],
             path_to_runtime=None,
-            minify=False)
+            minify=False,
+            keepname=False)
 
 
 def test_main_multiple_microbits():
@@ -606,7 +610,8 @@ def test_main_multiple_microbits():
             paths_to_microbits=[
                 '/media/foo/bar', '/media/foo/baz', '/media/foo/bob'],
             path_to_runtime=None,
-            minify=False)
+            minify=False,
+            keepname=False)
 
 
 def test_main_runtime():
@@ -620,7 +625,8 @@ def test_main_runtime():
             path_to_python='foo.py',
             paths_to_microbits=['/media/foo/bar'],
             path_to_runtime='baz.hex',
-            minify=False)
+            minify=False,
+            keepname=False)
 
 
 def test_main_named_args():
@@ -632,7 +638,8 @@ def test_main_named_args():
         mock_flash.assert_called_once_with(path_to_python=None,
                                            paths_to_microbits=[],
                                            path_to_runtime='baz.hex',
-                                           minify=False)
+                                           minify=False,
+                                           keepname=False)
 
 
 def test_main_watch_flag():
