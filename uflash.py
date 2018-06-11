@@ -273,7 +273,7 @@ def save_hex(hex_file, path):
 
 
 def flash(path_to_python=None, paths_to_microbits=None,
-          path_to_runtime=None, python_script=None, minify=False):
+          path_to_runtime=None, python_script=None, minify=False, keepname=False):
     """
     Given a path to or source of a Python file will attempt to create a hex
     file and then flash it onto the referenced BBC micro:bit.
@@ -429,7 +429,8 @@ def main(argv=None):
     else:
         try:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
-                  path_to_runtime=args.runtime, minify=args.minify)
+                  path_to_runtime=args.runtime, minify=args.minify,
+                  keepname=args.keepname)
         except Exception as ex:
             error_message = (
                 "Error flashing {source} to {target}{runtime}: {error!s}"
