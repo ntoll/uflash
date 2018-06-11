@@ -273,7 +273,8 @@ def save_hex(hex_file, path):
 
 
 def flash(path_to_python=None, paths_to_microbits=None,
-          path_to_runtime=None, python_script=None, minify=False, keepname=False):
+          path_to_runtime=None, python_script=None, minify=False,
+          keepname=False):
     """
     Given a path to or source of a Python file will attempt to create a hex
     file and then flash it onto the referenced BBC micro:bit.
