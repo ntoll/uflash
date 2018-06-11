@@ -303,6 +303,8 @@ def flash(path_to_python=None, paths_to_microbits=None,
         raise RuntimeError('Will only run on Python 2.7, or 3.3 and later.')
     # Grab the Python script (if needed).
     python_hex = ''
+    (script_path, script_name) = os.path.split(path_to_python)
+    (script_name_root, script_name_ext) = os.path.splitext(script_name)
     if path_to_python:
         if not path_to_python.endswith('.py'):
             raise ValueError('Python files must end in ".py".')
@@ -326,8 +328,15 @@ def flash(path_to_python=None, paths_to_microbits=None,
     # Attempt to write the hex file to the micro:bit.
     if paths_to_microbits:
         for path in paths_to_microbits:
-            hex_path = os.path.join(path, 'micropython.hex')
-            print('Flashing Python to: {}'.format(hex_path))
+            if keepname and path_to_python:
+                hex_file_name = script_name_root + '.hex'
+                hex_path = os.path.join(path, hex_file_name)
+            else:
+                hex_path = os.path.join(path, 'micropython.hex')
+            if path_to_python:
+                print('Flashing {} to: {}'.format(script_name, hex_path))
+            else:
+                print('Flashing Python to: {}'.format(hex_path))
             save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
