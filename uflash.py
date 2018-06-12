@@ -291,6 +291,9 @@ def flash(path_to_python=None, paths_to_microbits=None,
     If paths_to_microbits is unspecified it will attempt to find the device's
     path on the filesystem automatically.
 
+    If keepname is True the original filename (excluding the
+    extension) will be preserved.
+
     If the path_to_runtime is unspecified it will use the built in version of
     the MicroPython runtime. This feature is useful if a custom build of
     MicroPython is available.
