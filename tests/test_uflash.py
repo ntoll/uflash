@@ -365,6 +365,23 @@ def test_flash_with_path_to_microbit():
         expected_path = os.path.join('test_path', 'micropython.hex')
         assert mock_save.call_args[0][1] == expected_path
 
+def test_flash_with_keepname():
+    """
+    Flash the referenced path to the micro:bit with a hex file generated from
+    the MicroPython firmware and the referenced Python script and keep the
+    original filename root.
+    """
+    with mock.patch('uflash.save_hex') as mock_save:
+        uflash.flash('tests/example.py', ['test_path'], keepname=True)
+        assert mock_save.call_count == 1
+        # Create the hex we're expecting to flash onto the device.
+        with open('tests/example.py', 'rb') as py_file:
+            python = uflash.hexlify(py_file.read())
+        assert python
+        expected_hex = uflash.embed_hex(uflash._RUNTIME, python)
+        assert mock_save.call_args[0][0] == expected_hex
+        expected_path = os.path.join('test_path', 'example.hex')
+        assert mock_save.call_args[0][1] == expected_path
 
 def test_flash_with_path_to_runtime():
     """
@@ -524,6 +541,7 @@ def test_flash_raises(capsys):
     assert expected in stderr
 
 
+
 def test_flash_raises_with_info(capsys):
     """
     When flash goes wrong it should mention everything you tell it
@@ -641,6 +659,26 @@ def test_main_named_args():
                                            minify=False,
                                            keepname=False)
 
+def test_main_keepname_args():
+    """
+    Ensure that keepname is passed properly.
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.main(argv=['tests/example.py', '--keepname'])
+        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
+                                           paths_to_microbits=[],
+                                           path_to_runtime=None,
+                                           minify=False,
+                                           keepname=True)
+
+def test_main_keepname_message(capsys):
+    """
+    Ensure that the correct filename appears in output message.
+    """
+    uflash.main(argv=['tests/example.py', '--keepname'])
+    stdout, stderr = capsys.readouterr()
+    expected = 'example.hex'
+    assert (expected in stdout) or (expected in stderr)
 
 def test_main_watch_flag():
     """
