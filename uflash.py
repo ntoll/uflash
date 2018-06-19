@@ -337,8 +337,9 @@ def flash(path_to_python=None, paths_to_microbits=None,
             else:
                 hex_path = os.path.join(path, 'micropython.hex')
             if path_to_python:
-                print('Flashing {} to: {}'.format(script_name, hex_path))
-                if keepname:
+                if not keepname:
+                    print('Flashing {} to: {}'.format(script_name, hex_path))
+                else:
                     print('Hexifying {} as: {}'.format(script_name, hex_path))
             else:
                 print('Flashing Python to: {}'.format(hex_path))
