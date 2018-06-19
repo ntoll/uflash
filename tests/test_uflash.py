@@ -365,6 +365,7 @@ def test_flash_with_path_to_microbit():
         expected_path = os.path.join('test_path', 'micropython.hex')
         assert mock_save.call_args[0][1] == expected_path
 
+
 def test_flash_with_keepname():
     """
     Flash the referenced path to the micro:bit with a hex file generated from
@@ -382,6 +383,7 @@ def test_flash_with_keepname():
         assert mock_save.call_args[0][0] == expected_hex
         expected_path = os.path.join('test_path', 'example.hex')
         assert mock_save.call_args[0][1] == expected_path
+
 
 def test_flash_with_path_to_runtime():
     """
@@ -527,7 +529,6 @@ def test_main_first_arg_not_python(capsys):
     assert expected in stderr
 
 
-
 def test_flash_raises(capsys):
     """
     If the flash system goes wrong, it should say that's what happened
@@ -539,7 +540,6 @@ def test_flash_raises(capsys):
     _, stderr = capsys.readouterr()
     expected = 'Error flashing test.py'
     assert expected in stderr
-
 
 
 def test_flash_raises_with_info(capsys):
@@ -659,6 +659,7 @@ def test_main_named_args():
                                            minify=False,
                                            keepname=False)
 
+
 def test_main_keepname_args():
     """
     Ensure that keepname is passed properly.
@@ -671,6 +672,7 @@ def test_main_keepname_args():
                                            minify=False,
                                            keepname=True)
 
+
 def test_main_keepname_message(capsys):
     """
     Ensure that the correct filename appears in output message.
@@ -679,6 +681,7 @@ def test_main_keepname_message(capsys):
     stdout, stderr = capsys.readouterr()
     expected = 'example.hex'
     assert (expected in stdout) or (expected in stderr)
+
 
 def test_main_watch_flag():
     """
