@@ -10,7 +10,7 @@ It provides three services:
 
 1. A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.
 2. A command line utility called `uflash` that will flash Python scripts onto a BBC micro:bit.
-3. A command line utility called `hexify` for generating hex files on the local filesystem from Python scripts.
+3. A command line utility called `hexify` for creating hex files from Python scripts and saving them on the local filesystem
 
 Several essential operations are implemented:
 
@@ -122,16 +122,32 @@ hexify
 
 To create output .hex files in the same directory as the input .py files::
 
-   $ hexify example.py
+   $ hexify tests/example.py
+   Hexifying example.py as: tests/example.hex
 
 To create output .hex files in a different directory::
 
-   $ hexify -o /tmp exmaple.py
+   $ hexify example.py -o /tmp
+   Hexifying example.py as: /tmp/example.hex
 
 or::
 
-   $hexify --outdir /tmp example.py
+   $ hexify example.py --outdir /tmp
+   Hexifying example.py as: /tmp/example.hex
 
+Hexify can handle multiple input files::
+
+   $ hexify a.py b.py c.py
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
+
+or::
+
+   $ hexify *.py
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
 
 Development
 -----------
