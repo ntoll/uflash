@@ -6,10 +6,11 @@ uFlash
 A utility for flashing the BBC micro:bit with Python scripts and the
 MicroPython runtime. You pronounce the name of this utility "micro-flash". ;-)
 
-It provides two services:
+It provides three services:
 
 1. A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.
 2. A command line utility called `uflash` that will flash Python scripts onto a BBC micro:bit.
+3. A command line utility called `hexify` for generating hex files on the local filesystem from Python scripts.
 
 Several essential operations are implemented:
 
@@ -45,6 +46,9 @@ distros "should just work" (tm) out of the box given a default install.
 
 Command Usage
 -------------
+
+uflash
+~~~~~~
 
 To read help simply type::
 
@@ -95,19 +99,6 @@ You can even flash multiple devices at once::
     Flashing myscript.py to: /media/ntoll/MICROBIT/micropython.hex
     Flashing myscript.py to: /media/ntoll/MICROBIT1/micropython.hex
 
-A side effect of the ability to specify a target path is the ability to save
-the resultant hex file to somewhere other than a microbit.  The default hex
-file name makes that less useful so there is an option to preserve the
-original filename (exluding the extension, of course)::
-
-   $ uflash -k example.py /tmp/
-   Flashing example.py to: /tmp/example.hex
-
-or::
-
-    uflash --keepname example.py /tmp/
-    Flashing example.py to: /tmp/example.hex
-
 To extract a Python script from a hex file use the "-e" flag like this::
 
     $ uflash -e something.hex myscript.py
@@ -125,6 +116,22 @@ the following way::
 or::
 
     $ uflash --runtime=firmware.hex
+
+hexify
+~~~~~~
+
+To create output .hex files in the same directory as the input .py files::
+
+   $ hexify example.py
+
+To create output .hex files in a different directory::
+
+   $ hexify -o /tmp exmaple.py
+
+or::
+
+   $hexify --outdir /tmp example.py
+
 
 Development
 -----------

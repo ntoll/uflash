@@ -413,9 +413,6 @@ def main(argv=None):
     parser.add_argument('-m', '--minify',
                         action='store_true',
                         help='Minify the source')
-    parser.add_argument('-k', '--keepname',
-                        action='store_true',
-                        help='Keep original filename (exluding extension)')
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + get_version())
     args = parser.parse_args(argv)
