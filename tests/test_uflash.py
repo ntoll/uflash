@@ -660,29 +660,6 @@ def test_main_named_args():
                                            keepname=False)
 
 
-def test_main_keepname_args():
-    """
-    Ensure that keepname is passed properly.
-    """
-    with mock.patch('uflash.flash') as mock_flash:
-        uflash.main(argv=['tests/example.py', '--keepname'])
-        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
-                                           paths_to_microbits=[],
-                                           path_to_runtime=None,
-                                           minify=False,
-                                           keepname=True)
-
-
-def test_main_keepname_message(capsys):
-    """
-    Ensure that the correct filename appears in output message.
-    """
-    uflash.main(argv=['tests/example.py', '--keepname'])
-    stdout, stderr = capsys.readouterr()
-    expected = 'example.hex'
-    assert (expected in stdout) or (expected in stderr)
-
-
 def test_main_watch_flag():
     """
     The watch flag cause a call the correct function.
