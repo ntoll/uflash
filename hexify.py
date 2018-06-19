@@ -4,10 +4,9 @@ import sys
 import os
 
 _HELP_TEXT = """
-Creates hexified versions of micropython scripts.
-Intended for saving files to the local filesystem, _NOT_ the microbit.
-Does not autodetect a microbit.
-Accepts multiple imput scripts and optionally one output directory.
+A simple utility script intended for creating hexified versions of MicroPython
+scripts on the local filesystem _NOT_ the microbit.  Does not autodetect a
+microbit.  Accepts multiple input scripts and optionally one output directory.
 """
 
 def main(argv=None):
