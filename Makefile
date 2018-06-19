@@ -5,7 +5,7 @@ all:
 	@echo "\nThere is no default Makefile target right now. Try:\n"
 	@echo "make clean - reset the project and remove auto-generated assets."
 	@echo "make pyflakes - run the PyFlakes code checker."
-	@echo "make pep8 - run the PEP8 style checker."
+	@echo "make pycodestyle - run the PEP8 style checker."
 	@echo "make test - run the test suite."
 	@echo "make coverage - view a report on test coverage."
 	@echo "make check - run all the checkers and tests."
@@ -27,9 +27,8 @@ clean:
 pyflakes:
 	find . \( -name _build -o -name var -o -path ./docs \) -type d -prune -o -name '*.py' -print0 | $(XARGS) pyflakes
 
-pep8: clean
+pycodestyle: clean
 	find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pycodestyle --repeat --exclude=build/*,docs/* --ignore=E731,E402
-	#find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pep8 --repeat --exclude=build/*,docs/* --ignore=E731,E402
 
 test: clean
 	py.test
@@ -37,7 +36,7 @@ test: clean
 coverage: clean
 	py.test --cov-report term-missing --cov=uflash tests/
 
-check: clean pep8 pyflakes coverage
+check: clean pycodestyle pyflakes coverage
 
 package: check
 	python setup.py sdist
