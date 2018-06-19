@@ -443,7 +443,7 @@ def main(argv=None):
         try:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
                   path_to_runtime=args.runtime, minify=args.minify,
-                  keepname=args.keepname)
+                  keepname=False)
         except Exception as ex:
             error_message = (
                 "Error flashing {source} to {target}{runtime}: {error!s}"
