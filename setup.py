@@ -17,7 +17,7 @@ setup(
     author='Nicholas H.Tollervey',
     author_email='ntoll@ntoll.org',
     url='https://github.com/ntoll/uflash',
-    py_modules=['uflash', ],
+    py_modules=['uflash', 'hexify'],
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -35,6 +35,6 @@ setup(
         'Topic :: Software Development :: Embedded Systems',
     ],
     entry_points={
-        'console_scripts': ['uflash=uflash:main'],
+        'console_scripts': ['uflash=uflash:main', 'hexify=hexify:main'],
     }
 )
