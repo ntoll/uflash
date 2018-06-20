@@ -16,8 +16,13 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description=_HELP_TEXT)
     parser.add_argument('source', nargs='*', default=None)
+    parser.add_argument('-r', '--runtime', default=None,
+                        help="Use the referenced MicroPython runtime.")
     parser.add_argument('-o', '--outdir', default=None,
                         help="Output directory")
+    parser.add_argument('-m', '--minify',
+                        action='store_true',
+                        help='Minify the source')
     args = parser.parse_args(argv)
 
     for file in args.source:
@@ -25,7 +30,10 @@ def main(argv=None):
             (script_path, script_name) = os.path.split(file)
             args.outdir = script_path
         uflash.flash(path_to_python=file,
-                     paths_to_microbits=[args.outdir], keepname=True)
+                     path_to_runtime=args.runtime,
+                     paths_to_microbits=[args.outdir],
+                     minify=args.minify,
+                     keepname=True) # keepname is always True in hexify
 
 
 if __name__ == '__main__':
