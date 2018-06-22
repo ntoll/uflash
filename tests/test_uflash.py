@@ -385,6 +385,16 @@ def test_flash_with_keepname():
         assert mock_save.call_args[0][1] == expected_path
 
 
+def test_main_keepname_message(capsys):
+    """
+    Ensure that the correct message appears when called as from hexify.py.
+    """
+    uflash.flash('tests/example.py', paths_to_microbits=['tests'], keepname=True)
+    stdout, stderr = capsys.readouterr()
+    expected = 'Hexifying example.py as: tests/example.hex'
+    assert (expected in stdout) or (expected in stderr)
+
+
 def test_flash_with_path_to_runtime():
     """
     Use the referenced runtime hex file when building the hex file to be
