@@ -23,13 +23,15 @@ def main(argv=None):
     parser.add_argument('-m', '--minify',
                         action='store_true',
                         help='Minify the source')
+    parser.add_argument('--version', action='version',
+                        version=uflash.get_version())
     args = parser.parse_args(argv)
 
-    for file in args.source:
+    for py_file in args.source:
         if not args.outdir:
-            (script_path, script_name) = os.path.split(file)
+            (script_path, script_name) = os.path.split(py_file)
             args.outdir = script_path
-        uflash.flash(path_to_python=file,
+        uflash.flash(path_to_python=py_file,
                      path_to_runtime=args.runtime,
                      paths_to_microbits=[args.outdir],
                      minify=args.minify,
