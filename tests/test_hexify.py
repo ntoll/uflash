@@ -2,16 +2,8 @@
 """
 Tests for the uflash module.
 """
-import ctypes
-import os
-import os.path
 import sys
-import tempfile
-import time
-import threading
 
-import pytest
-import uflash
 import hexify
 
 try:
@@ -25,12 +17,6 @@ else:
         import mock
 
 
-if sys.version_info.major == 2:
-    import __builtin__ as builtins
-else:
-    import builtins
-
-
 def test_main_one_arg():
     """
     Test a simple call to main().
@@ -42,7 +28,6 @@ def test_main_one_arg():
                                            paths_to_microbits=['tests'],
                                            minify=False,
                                            keepname=True)
-
 
 
 def test_main_runtime_arg():
@@ -82,4 +67,3 @@ def test_main_outdir_arg():
                                            paths_to_microbits=['/tmp'],
                                            minify=False,
                                            keepname=True)
-
