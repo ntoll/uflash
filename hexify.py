@@ -11,7 +11,7 @@ microbit.  Accepts multiple input scripts and optionally one output directory.
 
 
 def main(argv=None):
-    if not argv:
+    if not argv:    # pragma: no cover
             argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description=_HELP_TEXT)
@@ -38,5 +38,5 @@ def main(argv=None):
                      keepname=True) # keepname is always True in hexify
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main(sys.argv[1:])
