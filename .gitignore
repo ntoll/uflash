@@ -10,3 +10,4 @@ docs/_build/*
 .idea/*
 .pytest_cache/*
 htmlcov/*
+tests/example.hex
