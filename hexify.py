@@ -35,7 +35,7 @@ def main(argv=None):
                      path_to_runtime=args.runtime,
                      paths_to_microbits=[args.outdir],
                      minify=args.minify,
-                     keepname=True) # keepname is always True in hexify
+                     keepname=True)  # keepname is always True in hexify
 
 
 if __name__ == '__main__':  # pragma: no cover
