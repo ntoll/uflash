@@ -9,3 +9,4 @@ build/*
 docs/_build/*
 .idea/*
 .pytest_cache/*
+htmlcov/*
