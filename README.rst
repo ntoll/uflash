@@ -70,7 +70,7 @@ within it (so that script is run when the BBC micro:bit boots up) then pass
 the path to the Python script in as the first argument to the command::
 
     $ uflash my_script.py
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing my_script.py to: /media/ntoll/MICROBIT/micropython.hex
 
 You can let uflash watch for changes of your script. It will be flashed
 automatically every time you save it::
@@ -87,13 +87,26 @@ the filesystem to the BBC micro:bit already is, you can specify this as a
 second argument to the command::
 
     $ uflash myscript.py /media/ntoll/MICROBIT
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT/micropython.hex
 
 You can even flash multiple devices at once::
 
     $ uflash myscript.py /media/ntoll/MICROBIT /media/ntoll/MICROBIT1
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
-    Flashing Python to: /media/ntoll/MICROBIT1/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT1/micropython.hex
+
+A side effect of the ability to specify a target path is the ability to save
+the resultant hex file to somewhere other than a microbit.  The default hex
+file name makes that less useful so there is an option to preserve the
+original filename (exluding the extension, of course)::
+
+   $ uflash -k example.py /tmp/
+   Flashing example.py to: /tmp/example.hex
+
+or::
+
+    uflash --keepname example.py /tmp/
+    Flashing example.py to: /tmp/example.hex
 
 To extract a Python script from a hex file use the "-e" flag like this::
 

@@ -278,7 +278,8 @@ def save_hex(hex_file, path):
 
 
 def flash(path_to_python=None, paths_to_microbits=None,
-          path_to_runtime=None, python_script=None, minify=False):
+          path_to_runtime=None, python_script=None, minify=False,
+          keepname=False):
     """
     Given a path to or source of a Python file will attempt to create a hex
     file and then flash it onto the referenced BBC micro:bit.
@@ -295,6 +296,9 @@ def flash(path_to_python=None, paths_to_microbits=None,
     If paths_to_microbits is unspecified it will attempt to find the device's
     path on the filesystem automatically.
 
+    If keepname is True the original filename (excluding the
+    extension) will be preserved.
+
     If the path_to_runtime is unspecified it will use the built in version of
     the MicroPython runtime. This feature is useful if a custom build of
     MicroPython is available.
@@ -308,6 +312,8 @@ def flash(path_to_python=None, paths_to_microbits=None,
     # Grab the Python script (if needed).
     python_hex = ''
     if path_to_python:
+        (script_path, script_name) = os.path.split(path_to_python)
+        (script_name_root, script_name_ext) = os.path.splitext(script_name)
         if not path_to_python.endswith('.py'):
             raise ValueError('Python files must end in ".py".')
         with open(path_to_python, 'rb') as python_script:
@@ -330,8 +336,15 @@ def flash(path_to_python=None, paths_to_microbits=None,
     # Attempt to write the hex file to the micro:bit.
     if paths_to_microbits:
         for path in paths_to_microbits:
-            hex_path = os.path.join(path, 'micropython.hex')
-            print('Flashing Python to: {}'.format(hex_path))
+            if keepname and path_to_python:
+                hex_file_name = script_name_root + '.hex'
+                hex_path = os.path.join(path, hex_file_name)
+            else:
+                hex_path = os.path.join(path, 'micropython.hex')
+            if path_to_python:
+                print('Flashing {} to: {}'.format(script_name, hex_path))
+            else:
+                print('Flashing Python to: {}'.format(hex_path))
             save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
@@ -403,6 +416,9 @@ def main(argv=None):
     parser.add_argument('-m', '--minify',
                         action='store_true',
                         help='Minify the source')
+    parser.add_argument('-k', '--keepname',
+                        action='store_true',
+                        help='Keep original filename (exluding extension)')
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + get_version())
     args = parser.parse_args(argv)
@@ -431,7 +447,8 @@ def main(argv=None):
     else:
         try:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
-                  path_to_runtime=args.runtime, minify=args.minify)
+                  path_to_runtime=args.runtime, minify=args.minify,
+                  keepname=args.keepname)
         except Exception as ex:
             error_message = (
                 "Error flashing {source} to {target}{runtime}: {error!s}"
