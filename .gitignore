@@ -11,3 +11,5 @@ docs/_build/*
 .idea/*
 htmlcov/*
 tests/example.hex
+deb_dist/*
+uflash-*.tar.gz

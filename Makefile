@@ -21,6 +21,8 @@ clean:
 	rm -rf .tox
 	rm -rf docs/_build
 	rm -f tests/example.hex
+	rm -rf deb_dist
+	rm -f uflash-*.tar.gz
 	find . \( -name '*.py[co]' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.bak' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.tgz' -o -name dropin.cache \) -print0 | $(XARGS) rm
