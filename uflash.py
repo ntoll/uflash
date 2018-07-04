@@ -415,10 +415,10 @@ def py2hex(argv=None):
             (script_path, script_name) = os.path.split(py_file)
             args.outdir = script_path
         flash(path_to_python=py_file,
-                     path_to_runtime=args.runtime,
-                     paths_to_microbits=[args.outdir],
-                     minify=args.minify,
-                     keepname=True)  # keepname is always True in py2hex
+              path_to_runtime=args.runtime,
+              paths_to_microbits=[args.outdir],
+              minify=args.minify,
+              keepname=True)  # keepname is always True in py2hex
 
 
 def main(argv=None):
