@@ -427,7 +427,7 @@ def test_main_keepname_message(capsys):
     uflash.flash('tests/example.py', paths_to_microbits=['tests'],
                  keepname=True)
     stdout, stderr = capsys.readouterr()
-    expected = 'Hexifying example.py as: tests/example.hex'
+    expected = 'Converting example.py to tests/example.hex'
     assert (expected in stdout) or (expected in stderr)
 
 
@@ -819,3 +819,56 @@ def test_hexlify_validates_script_length():
     with pytest.raises(ValueError) as excinfo:
         uflash.hexlify(input)
     assert str(excinfo.value) == "Python script must be less than 8188 bytes."
+
+
+def test_py2hex_one_arg():
+    """
+    Test a simple call to main().
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.py2hex(argv=['tests/example.py'])
+        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
+                                           path_to_runtime=None,
+                                           paths_to_microbits=['tests'],
+                                           minify=False,
+                                           keepname=True)
+
+
+def test_py2hex_runtime_arg():
+    """
+    Test a simple call to main().
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.py2hex(argv=['tests/example.py', '-r', 'tests/fake.hex'])
+        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
+                                           path_to_runtime='tests/fake.hex',
+                                           paths_to_microbits=['tests'],
+                                           minify=False,
+                                           keepname=True)
+
+
+def test_py2hex_minify_arg():
+    """
+    Test a simple call to main().
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.py2hex(argv=['tests/example.py', '-m'])
+        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
+                                           path_to_runtime=None,
+                                           paths_to_microbits=['tests'],
+                                           minify=True,
+                                           keepname=True)
+
+
+def test_py2hex_outdir_arg():
+    """
+    Test a simple call to main().
+    """
+    with mock.patch('uflash.flash') as mock_flash:
+        uflash.py2hex(argv=['tests/example.py', '-o', '/tmp'])
+        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
+                                           path_to_runtime=None,
+                                           paths_to_microbits=['/tmp'],
+                                           minify=False,
+                                           keepname=True)
+
