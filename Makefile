@@ -38,7 +38,6 @@ test: clean
 
 coverage: clean
 	py.test --cov-report term-missing --cov=uflash tests/
-	py.test --cov-report term-missing --cov=hexify tests/
 
 check: clean pep8 pyflakes coverage
 
