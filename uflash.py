@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover
 _SCRIPT_ADDR = 0x3e000
 
 
-#: The help text to be shown when requested.
+#: The help text to be shownby uflash  when requested.
 _HELP_TEXT = """
 Flash Python onto the BBC micro:bit or extract Python from a .hex file.
 
@@ -45,6 +45,11 @@ version of the MicroPython runtime.
 Documentation is here: https://uflash.readthedocs.io/en/latest/
 """
 
+_PY2HEX_HELP_TEXT = """
+A simple utility script intended for creating hexified versions of MicroPython
+scripts on the local filesystem _NOT_ the microbit.  Does not autodetect a
+microbit.  Accepts multiple input scripts and optionally one output directory.
+"""
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION
 _VERSION = (1, 1, 3, )
@@ -345,7 +350,7 @@ def flash(path_to_python=None, paths_to_microbits=None,
                 if not keepname:
                     print('Flashing {} to: {}'.format(script_name, hex_path))
                 else:
-                    print('Hexifying {} as: {}'.format(script_name, hex_path))
+                    print('Converting {} to {}'.format(script_name, hex_path))
             else:
                 print('Flashing Python to: {}'.format(hex_path))
             save_hex(micropython_hex, hex_path)
@@ -386,6 +391,34 @@ def watch_file(path, func, *args, **kwargs):
             last_modification_time = new_modification_time
     except KeyboardInterrupt:
         pass
+
+
+def py2hex(argv=None):
+    if not argv:    # pragma: no cover
+            argv = sys.argv[1:]
+
+    parser = argparse.ArgumentParser(description=_PY2HEX_HELP_TEXT)
+    parser.add_argument('source', nargs='*', default=None)
+    parser.add_argument('-r', '--runtime', default=None,
+                        help="Use the referenced MicroPython runtime.")
+    parser.add_argument('-o', '--outdir', default=None,
+                        help="Output directory")
+    parser.add_argument('-m', '--minify',
+                        action='store_true',
+                        help='Minify the source')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + get_version())
+    args = parser.parse_args(argv)
+
+    for py_file in args.source:
+        if not args.outdir:
+            (script_path, script_name) = os.path.split(py_file)
+            args.outdir = script_path
+        flash(path_to_python=py_file,
+                     path_to_runtime=args.runtime,
+                     paths_to_microbits=[args.outdir],
+                     minify=args.minify,
+                     keepname=True)  # keepname is always True in py2hex
 
 
 def main(argv=None):
