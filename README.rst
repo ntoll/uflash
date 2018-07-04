@@ -10,7 +10,7 @@ It provides three services:
 
 1. A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.
 2. A command line utility called `uflash` that will flash Python scripts onto a BBC micro:bit.
-3. A command line utility called `hexify` for creating hex files from Python scripts and saving them on the local filesystem
+3. A command line utility called `py2hex` for creating hex files from Python scripts and saving them on the local filesystem
 
 Several essential operations are implemented:
 
@@ -117,37 +117,37 @@ or::
 
     $ uflash --runtime=firmware.hex
 
-hexify
+py2hex
 ~~~~~~
 
 To create output .hex files in the same directory as the input .py files::
 
-   $ hexify tests/example.py
-   Hexifying example.py as: tests/example.hex
+   $ py2hex tests/example.py
+   Converting example.py to tests/example.hex
 
 To create output .hex files in a different directory::
 
-   $ hexify example.py -o /tmp
-   Hexifying example.py as: /tmp/example.hex
+   $ py2hex example.py -o /tmp
+   Converting example.py to /tmp/example.hex
 
 or::
 
-   $ hexify example.py --outdir /tmp
-   Hexifying example.py as: /tmp/example.hex
+   $ py2hex example.py --outdir /tmp
+   Converting example.py to /tmp/example.hex
 
 Hexify can handle multiple input files::
 
-   $ hexify a.py b.py c.py
-   Hexifying a.py as: a.hex
-   Hexifying b.py as: b.hex
-   Hexifying c.py as: c.hex
+   $ py2hex a.py b.py c.py
+   Converting a.py to a.hex
+   Converting b.py to b.hex
+   Converting c.py to c.hex
 
 or::
 
-   $ hexify *.py
-   Hexifying a.py as: a.hex
-   Hexifying b.py as: b.hex
-   Hexifying c.py as: c.hex
+   $ py2hex *.py
+   Converting a.py to a.hex
+   Converting b.py to b.hex
+   Converting c.py to c.hex
 
 Development
 -----------
