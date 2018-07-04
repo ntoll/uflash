@@ -871,4 +871,3 @@ def test_py2hex_outdir_arg():
                                            paths_to_microbits=['/tmp'],
                                            minify=False,
                                            keepname=True)
-
