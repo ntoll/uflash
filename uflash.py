@@ -21,7 +21,7 @@ import sys
 from subprocess import check_output
 import time
 
-# nudatus is an optional dependancy
+# nudatus is an optional dependency
 can_minify = True
 try:
     import nudatus
@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover
 _SCRIPT_ADDR = 0x3e000
 
 
-#: The help text to be shownby uflash  when requested.
+#: The help text to be shown by uflash  when requested.
 _HELP_TEXT = """
 Flash Python onto the BBC micro:bit or extract Python from a .hex file.
 
@@ -394,6 +394,18 @@ def watch_file(path, func, *args, **kwargs):
 
 
 def py2hex(argv=None):
+    """
+    Entry point for the command line tool 'py2hex'
+
+    Will print help text if the optional first argument is "help". Otherwise
+    it will ensure the first argument ends in ".py" (the source Python script).
+    
+    An optional second argument is used to to reference the path where the
+    resultant hex file sill be saved (the default location is in the same
+    directory as the .py file).
+    
+    Exceptions are caught and printed for the user.
+    """
     if not argv:    # pragma: no cover
             argv = sys.argv[1:]
 
@@ -424,7 +436,6 @@ def py2hex(argv=None):
 def main(argv=None):
     """
     Entry point for the command line tool 'uflash'.
-
     Will print help text if the optional first argument is "help". Otherwise
     it will ensure the optional first argument ends in ".py" (the source
     Python script).
