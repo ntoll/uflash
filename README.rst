@@ -123,31 +123,35 @@ py2hex
 To create output .hex files in the same directory as the input .py files::
 
    $ py2hex tests/example.py
-   Converting example.py to tests/example.hex
+   Hexifying example.py as: tests/example.hex
+
+py2hex includes that same -r/--runtime and -m/--minify options as uflash
+and adds an additional option -o/--outdir:
+
 
 To create output .hex files in a different directory::
 
    $ py2hex example.py -o /tmp
-   Converting example.py to /tmp/example.hex
+   Hexifying example.py as: /tmp/example.hex
 
 or::
 
    $ py2hex example.py --outdir /tmp
-   Converting example.py to /tmp/example.hex
+   Hexifying example.py as: /tmp/example.hex
 
-Hexify can handle multiple input files::
+py2hex can handle multiple input files::
 
    $ py2hex a.py b.py c.py
-   Converting a.py to a.hex
-   Converting b.py to b.hex
-   Converting c.py to c.hex
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
 
 or::
 
    $ py2hex *.py
-   Converting a.py to a.hex
-   Converting b.py to b.hex
-   Converting c.py to c.hex
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
 
 Development
 -----------
