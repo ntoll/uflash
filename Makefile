@@ -44,6 +44,9 @@ check: clean pep8 pyflakes coverage
 package: check
 	python setup.py sdist
 
+rpm: clean
+	python setup.py bdist_rpm
+
 publish: check
 	@echo "\nChecks pass, good to publish..."
 	python setup.py sdist upload
