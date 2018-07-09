@@ -186,5 +186,6 @@ with development. Typing ``make`` on its own will list the options thus::
     make coverage - view a report on test coverage.
     make check - run all the checkers and tests.
     make package - create a deployable package for the project.
+    make rpm - create an rpm package for the project.
     make publish - publish the project to PyPI.
     make docs - run sphinx to create project documentation.
