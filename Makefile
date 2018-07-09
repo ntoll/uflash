@@ -20,6 +20,9 @@ clean:
 	rm -rf .coverage
 	rm -rf .tox
 	rm -rf docs/_build
+	rm -f tests/example.hex
+	rm -rf deb_dist
+	rm -f uflash-*.tar.gz
 	find . \( -name '*.py[co]' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.bak' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.tgz' -o -name dropin.cache \) -print0 | $(XARGS) rm
@@ -35,6 +38,7 @@ test: clean
 
 coverage: clean
 	py.test --cov-report term-missing --cov=uflash tests/
+	py.test --cov-report term-missing --cov=hexify tests/
 
 check: clean pep8 pyflakes coverage
 
