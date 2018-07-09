@@ -427,7 +427,7 @@ def test_main_keepname_message(capsys):
     uflash.flash('tests/example.py', paths_to_microbits=['tests'],
                  keepname=True)
     stdout, stderr = capsys.readouterr()
-    expected = 'Converting example.py to tests/example.hex'
+    expected = 'Hexifying example.py as: tests/example.hex'
     assert (expected in stdout) or (expected in stderr)
 
 
