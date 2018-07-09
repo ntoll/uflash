@@ -350,7 +350,7 @@ def flash(path_to_python=None, paths_to_microbits=None,
                 if not keepname:
                     print('Flashing {} to: {}'.format(script_name, hex_path))
                 else:
-                    print('Converting {} to {}'.format(script_name, hex_path))
+                    print('Hexifying {} as: {}'.format(script_name, hex_path))
             else:
                 print('Flashing Python to: {}'.format(hex_path))
             save_hex(micropython_hex, hex_path)
