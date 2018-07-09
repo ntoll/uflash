@@ -10,6 +10,7 @@ all:
 	@echo "make coverage - view a report on test coverage."
 	@echo "make check - run all the checkers and tests."
 	@echo "make package - create a deployable package for the project."
+	@echo "make rpm - create an rpm package for the project."
 	@echo "make publish - publish the project to PyPI."
 	@echo "make docs - run sphinx to create project documentation.\n"
 
