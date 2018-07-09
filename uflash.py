@@ -399,11 +399,11 @@ def py2hex(argv=None):
 
     Will print help text if the optional first argument is "help". Otherwise
     it will ensure the first argument ends in ".py" (the source Python script).
-    
+
     An optional second argument is used to to reference the path where the
     resultant hex file sill be saved (the default location is in the same
     directory as the .py file).
-    
+
     Exceptions are caught and printed for the user.
     """
     if not argv:    # pragma: no cover
