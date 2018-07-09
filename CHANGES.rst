@@ -1,6 +1,13 @@
 Release History
 ===============
 
+1.2.0
+-----
+
+* Update to latest version of MicroPython. Thanks to Damien George.
+* Add attribute called MICROPYTHON_VERSION to report the version of MicroPython
+  bundled with uflash.
+
 1.1.1
 -----
 
