@@ -45,7 +45,7 @@ check: clean pep8 pyflakes coverage
 package: check
 	python setup.py sdist
 
-rpm: clean
+rpm: check
 	python setup.py bdist_rpm
 
 publish: check
