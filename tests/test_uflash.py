@@ -422,7 +422,7 @@ def test_flash_with_keepname():
 
 def test_main_keepname_message(capsys):
     """
-    Ensure that the correct message appears when called as from hexify.py.
+    Ensure that the correct message appears when called as from py2hex.
     """
     uflash.flash('tests/example.py', paths_to_microbits=['tests'],
                  keepname=True)
