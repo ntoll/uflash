@@ -114,13 +114,13 @@ def test_embed_hex():
     # The Python hex should be in the correct location.
     py_list = python.split()
     result_list = result.split()
-    start_of_python_from_end = len(py_list) + 2
+    start_of_python_from_end = len(py_list) + 5
     start_of_python = len(result_list) - start_of_python_from_end
-    assert result_list[start_of_python:-2] == py_list
+    assert result_list[start_of_python:-5] == py_list
     # The firmware should enclose the Python correctly.
     firmware_list = uflash._RUNTIME.split()
-    assert firmware_list[:-2] == result_list[:-start_of_python_from_end]
-    assert firmware_list[-2:] == result_list[-2:]
+    assert firmware_list[:-5] == result_list[:-start_of_python_from_end]
+    assert firmware_list[-5:] == result_list[-5:]
 
 
 def test_embed_no_python():

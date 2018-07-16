@@ -52,7 +52,7 @@ _MAX_SIZE = 8188
 
 
 #: The version number reported by the bundled MicroPython in os.uname().
-MICROPYTHON_VERSION = '1.0.0-beta.1'
+MICROPYTHON_VERSION = '1.0.0-rc.1'
 
 
 def get_version():
@@ -162,9 +162,9 @@ def embed_hex(runtime_hex, python_hex=None):
     embedded_list = []
     # The embedded list should be the original runtime with the Python based
     # hex embedded two lines from the end.
-    embedded_list.extend(runtime_list[:-2])
+    embedded_list.extend(runtime_list[:-5])
     embedded_list.extend(py_list)
-    embedded_list.extend(runtime_list[-2:])
+    embedded_list.extend(runtime_list[-5:])
     return '\n'.join(embedded_list) + '\n'
 
 
@@ -198,7 +198,7 @@ def extract_script(embedded_hex):
                 break
         # Pass the extracted hex through unhexlify
         return unhexlify('\n'.join(
-            hex_lines[start_script - 1:end_script if end_script else -3]))
+            hex_lines[start_script - 1:end_script if end_script else -6]))
     return ''
 
 
