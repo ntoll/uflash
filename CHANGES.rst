@@ -1,6 +1,13 @@
 Release History
 ===============
 
+1.2.1
+-----
+
+* Update to latest version of MicroPython. Thanks to Damien George and Carlos
+  Pereira Atencio for their hard work.
+* This is the version of uflash to be used in Mu 1.0.0 (final).
+
 1.2.0
 -----
 
