@@ -47,12 +47,12 @@ Documentation is here: https://uflash.readthedocs.io/en/latest/
 
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION of uflash
-_VERSION = (1, 2, 1, )
+_VERSION = (1, 2, 2, )
 _MAX_SIZE = 8188
 
 
 #: The version number reported by the bundled MicroPython in os.uname().
-MICROPYTHON_VERSION = '1.0.0-rc.2'
+MICROPYTHON_VERSION = '1.0.0-rc.3'
 
 
 def get_version():
