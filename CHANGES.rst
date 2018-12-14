@@ -1,6 +1,12 @@
 Release History
 ===============
 
+1.2.4
+-----
+
+* Updated to the latest version of MicroPython for micro:bit (1.0.1)
+* This is the version of uflash to be used in Mu 1.0.2.
+
 1.2.3
 -----
 
