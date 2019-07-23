@@ -159,12 +159,28 @@ def embed_hex(runtime_hex, python_hex=None):
         return runtime_hex
     py_list = python_hex.split()
     runtime_list = runtime_hex.split()
+    # set insertion point
+    tail_list = runtime_list[-5:]
+    _UICR = ":020000041000EA"
+    _SIG = ":04000005" #better name for this constant
+    insertion_point = -5
+    if _UICR in tail_list:
+        # if UICR is present, insert before _UICR
+        insertion_point += tail_list.index(_UICR)
+    elif any(_SIG in entries for entries in tail_list):
+        # otherwise insert before the entry that starts with 04000005
+        sig = [entries for entries in tail_list if _SIG in entries][0]
+        insertion_point += tail_list.index(sig)
+    else:
+        # else insert before end-of-file record
+        insertion_point += len(tail_list) - 1
+
     embedded_list = []
     # The embedded list should be the original runtime with the Python based
-    # hex embedded two lines from the end.
-    embedded_list.extend(runtime_list[:-5])
+    # hex embedded from insertion point.
+    embedded_list.extend(runtime_list[:insertion_point])
     embedded_list.extend(py_list)
-    embedded_list.extend(runtime_list[-5:])
+    embedded_list.extend(runtime_list[insertion_point:])
     return '\n'.join(embedded_list) + '\n'
 
 
