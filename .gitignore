@@ -8,3 +8,8 @@ build/*
 .tox
 docs/_build/*
 .pytest_cache/*
+.idea/*
+htmlcov/*
+tests/example.hex
+deb_dist/*
+uflash-*.tar.gz

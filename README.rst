@@ -6,10 +6,11 @@ uFlash
 A utility for flashing the BBC micro:bit with Python scripts and the
 MicroPython runtime. You pronounce the name of this utility "micro-flash". ;-)
 
-It provides two services:
+It provides three services:
 
 1. A library of functions to programatically create a hex file and flash it onto a BBC micro:bit.
 2. A command line utility called `uflash` that will flash Python scripts onto a BBC micro:bit.
+3. A command line utility called `py2hex` for creating hex files from Python scripts and saving them on the local filesystem
 
 Several essential operations are implemented:
 
@@ -46,6 +47,9 @@ distros "should just work" (tm) out of the box given a default install.
 Command Usage
 -------------
 
+uflash
+~~~~~~
+
 To read help simply type::
 
     $ uflash --help
@@ -70,7 +74,7 @@ within it (so that script is run when the BBC micro:bit boots up) then pass
 the path to the Python script in as the first argument to the command::
 
     $ uflash my_script.py
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing my_script.py to: /media/ntoll/MICROBIT/micropython.hex
 
 You can let uflash watch for changes of your script. It will be flashed
 automatically every time you save it::
@@ -87,13 +91,13 @@ the filesystem to the BBC micro:bit already is, you can specify this as a
 second argument to the command::
 
     $ uflash myscript.py /media/ntoll/MICROBIT
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT/micropython.hex
 
 You can even flash multiple devices at once::
 
     $ uflash myscript.py /media/ntoll/MICROBIT /media/ntoll/MICROBIT1
-    Flashing Python to: /media/ntoll/MICROBIT/micropython.hex
-    Flashing Python to: /media/ntoll/MICROBIT1/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT/micropython.hex
+    Flashing myscript.py to: /media/ntoll/MICROBIT1/micropython.hex
 
 To extract a Python script from a hex file use the "-e" flag like this::
 
@@ -112,6 +116,41 @@ the following way::
 or::
 
     $ uflash --runtime=firmware.hex
+
+py2hex
+~~~~~~
+
+To create output .hex files in the same directory as the input .py files::
+
+   $ py2hex tests/example.py
+   Hexifying example.py as: tests/example.hex
+
+py2hex includes that same -r/--runtime and -m/--minify options as uflash
+and adds an additional option -o/--outdir:
+
+To create output .hex files in a different directory::
+
+   $ py2hex example.py -o /tmp
+   Hexifying example.py as: /tmp/example.hex
+
+or::
+
+   $ py2hex example.py --outdir /tmp
+   Hexifying example.py as: /tmp/example.hex
+
+py2hex can handle multiple input files::
+
+   $ py2hex a.py b.py c.py
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
+
+or::
+
+   $ py2hex *.py
+   Hexifying a.py as: a.hex
+   Hexifying b.py as: b.hex
+   Hexifying c.py as: c.hex
 
 Development
 -----------
@@ -146,5 +185,6 @@ with development. Typing ``make`` on its own will list the options thus::
     make coverage - view a report on test coverage.
     make check - run all the checkers and tests.
     make package - create a deployable package for the project.
+    make rpm - create an rpm package for the project.
     make publish - publish the project to PyPI.
     make docs - run sphinx to create project documentation.
