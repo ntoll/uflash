@@ -52,7 +52,7 @@ microbit.  Accepts multiple input scripts and optionally one output directory.
 """
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION of uflash
-_VERSION = (1, 2, 4, )
+_VERSION = (1, 3, 0, )
 _MAX_SIZE = 8188
 
 
@@ -411,7 +411,7 @@ def py2hex(argv=None):
     Exceptions are caught and printed for the user.
     """
     if not argv:    # pragma: no cover
-            argv = sys.argv[1:]
+        argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description=_PY2HEX_HELP_TEXT)
     parser.add_argument('source', nargs='*', default=None)
