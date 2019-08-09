@@ -10,6 +10,7 @@ all:
 	@echo "make coverage - view a report on test coverage."
 	@echo "make check - run all the checkers and tests."
 	@echo "make package - create a deployable package for the project."
+	@echo "make rpm - create an rpm package for the project."
 	@echo "make publish - publish the project to PyPI."
 	@echo "make docs - run sphinx to create project documentation.\n"
 
@@ -20,6 +21,9 @@ clean:
 	rm -rf .coverage
 	rm -rf .tox
 	rm -rf docs/_build
+	rm -f tests/example.hex
+	rm -rf deb_dist
+	rm -f uflash-*.tar.gz
 	find . \( -name '*.py[co]' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.bak' -o -name dropin.cache \) -print0 | $(XARGS) rm
 	find . \( -name '*.tgz' -o -name dropin.cache \) -print0 | $(XARGS) rm
@@ -40,6 +44,9 @@ check: clean pep8 pyflakes coverage
 
 package: check
 	python setup.py sdist
+
+rpm: check
+	python setup.py bdist_rpm
 
 publish: check
 	@echo "\nChecks pass, good to publish..."

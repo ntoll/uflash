@@ -17,7 +17,7 @@ setup(
     author='Nicholas H.Tollervey',
     author_email='ntoll@ntoll.org',
     url='https://github.com/ntoll/uflash',
-    py_modules=['uflash', ],
+    py_modules=['uflash', 'py2hex'],
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -31,10 +31,11 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Education',
         'Topic :: Software Development :: Embedded Systems',
     ],
     entry_points={
-        'console_scripts': ['uflash=uflash:main'],
+        'console_scripts': ['uflash=uflash:main', 'py2hex=uflash:py2hex'],
     }
 )
