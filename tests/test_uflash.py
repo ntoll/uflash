@@ -304,6 +304,28 @@ def test_save_hex():
         assert written_file.read() == hex_file
 
 
+def test_save_hex_to_microbit():
+    """
+    Ensure the good case works saving to a location like the micro:bit drive.
+    """
+    # Ensure we have a temporary file to write to that doesn't already exist.
+    path_to_hex = os.path.join(tempfile.gettempdir(), 'microbit.hex')
+    if os.path.exists(path_to_hex):
+        os.remove(path_to_hex)
+    assert not os.path.exists(path_to_hex)
+    # Create the hex file we want to "flash"
+    python = uflash.hexlify(TEST_SCRIPT)
+    hex_file = uflash.embed_hex(uflash._RUNTIME, python)
+    # Save the hex.
+    with mock.patch('os.path.isfile', side_effect=(True, True, False)):
+        with mock.patch('time.time', side_effect=(1, 2, 10)):
+            uflash.save_hex(hex_file, path_to_hex)
+    # Ensure the hex has been written as expected.
+    assert os.path.exists(path_to_hex)
+    with open(path_to_hex) as written_file:
+        assert written_file.read() == hex_file
+
+
 def test_save_hex_no_hex():
     """
     The function raises a ValueError if no hex content is provided.

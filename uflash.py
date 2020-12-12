@@ -3,7 +3,7 @@
 This module contains functions for turning a Python script into a .hex file
 and flashing it onto a BBC micro:bit.
 
-Copyright (c) 2015-2018 Nicholas H.Tollervey and others.
+Copyright (c) 2015-2020 Nicholas H.Tollervey and others.
 
 See the LICENSE file for more information, or visit:
 
@@ -282,8 +282,22 @@ def save_hex(hex_file, path):
         raise ValueError('Cannot flash an empty .hex file.')
     if not path.endswith('.hex'):
         raise ValueError('The path to flash must be for a .hex file.')
+    start_time = time.time()
     with open(path, 'wb') as output:
         output.write(hex_file.encode('ascii'))
+    # Determine if hex is copied to a micro:bit if this DAPLink file exists
+    if os.path.isfile(os.path.join(os.path.dirname(path), 'DETAILS.TXT')):
+        # Normally file operations are blocking, but in Linux and macOS they
+        # return before the OS has fully transferred the file to the micro:bit.
+        # To check if the file transfer has finished we wait for the MICROBIT
+        # drive to unmount. Until that happens the hex file will be visible.
+        # In old versions of micro:bit firmware (DAPLink v0234) we need to wait
+        # a bit before the hex file appears. Normal hex transfers of this size
+        # will always take longer than 5 seconds, so wait before checking.
+        while (start_time + 5) > time.time():
+            time.sleep(1)
+        while os.path.isfile(path):
+            time.sleep(0.5)
 
 
 def flash(path_to_python=None, paths_to_microbits=None,
