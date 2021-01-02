@@ -871,3 +871,166 @@ def test_py2hex_outdir_arg():
                                            paths_to_microbits=['/tmp'],
                                            minify=False,
                                            keepname=True)
+
+
+def test_script_to_fs():
+    """
+    Test script_to_fs with a random example without anything special about it.
+    """
+    script = b'A' * 364
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE79076D61696E2E7079414141414141A4',
+        ':108C10004141414141414141414141414141414144',
+        ':108C20004141414141414141414141414141414134',
+        ':108C30004141414141414141414141414141414124',
+        ':108C40004141414141414141414141414141414114',
+        ':108C50004141414141414141414141414141414104',
+        ':108C600041414141414141414141414141414141F4',
+        ':108C70004141414141414141414141414141410223',
+        ':108C80000141414141414141414141414141414114',
+        ':108C900041414141414141414141414141414141C4',
+        ':108CA00041414141414141414141414141414141B4',
+        ':108CB00041414141414141414141414141414141A4',
+        ':108CC0004141414141414141414141414141414194',
+        ':108CD0004141414141414141414141414141414184',
+        ':108CE0004141414141414141414141414141414174',
+        ':108CF00041414141414141414141414141414103A2',
+        ':108D00000241414141414141414141414141414192',
+        ':108D10004141414141414141414141414141414143',
+        ':108D20004141414141414141414141414141414133',
+        ':108D30004141414141414141414141414141414123',
+        ':108D40004141414141414141414141414141414113',
+        ':108D50004141414141414141414141414141414103',
+        ':108D600041414141414141414141414141414141F3',
+        ':108D700041414141414141414141FFFFFFFFFFFF6F'
+    ])
+    result = uflash.script_to_fs(script)
+    assert result == expected_result, script
+
+
+def test_script_to_fs_short():
+    """
+    Test script_to_fs with a script smaller than a fs chunk.
+    """
+    script = b'Very short example'
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE1B076D61696E2E70795665727920734F',
+        ':108C1000686F7274206578616D706C65FFFFFFFF8F',
+        ':108C2000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF54',
+        ':108C3000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF44',
+        ':108C4000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF34',
+        ':108C5000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF24',
+        ':108C6000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF14',
+        ':108C7000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF04',
+    ])
+    result = uflash.script_to_fs(script)
+    assert result == expected_result, script
+
+
+def test_script_to_fs_two_chunks():
+    """
+    Test script_to_fs with a script smaller than a fs chunk.
+    """
+    script = b'This is a slightly longer bit of test that should be ' \
+             b'more than a single block\nThis is a slightly longer ' \
+             b'bit of test that should be more than a single block'
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE26076D61696E2E70795468697320695C',
+        ':108C100073206120736C696768746C79206C6F6E67',
+        ':108C200067657220626974206F66207465737420B2',
+        ':108C3000746861742073686F756C64206265206D60',
+        ':108C40006F7265207468616E20612073696E676C55',
+        ':108C50006520626C6F636B0A5468697320697320C6',
+        ':108C60006120736C696768746C79206C6F6E6765DE',
+        ':108C70007220626974206F662074657374207402B8',
+        ':108C8000016861742073686F756C64206265206D83',
+        ':108C90006F7265207468616E20612073696E676C05',
+        ':108CA0006520626C6F636BFFFFFFFFFFFFFFFFFF3D',
+        ':108CB000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC4',
+        ':108CC000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB4',
+        ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
+        ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
+        ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+    ])
+    result = uflash.script_to_fs(script)
+    assert result == expected_result, script
+
+
+def test_script_to_fs_chunk_boundary():
+    """
+    Test script_to_fs with a random example without anything special about it.
+    """
+    script_short = b'This is an edge case test to fill the last byte of ' \
+                   b'the first chunk.\n' + (b'A' * 48)
+    expected_result_short = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE7D076D61696E2E707954686973206905',
+        ':108C10007320616E206564676520636173652074ED',
+        ':108C200065737420746F2066696C6C2074686520AD',
+        ':108C30006C6173742062797465206F662074686556',
+        ':108C4000206669727374206368756E6B2E0A4141E9',
+        ':108C50004141414141414141414141414141414104',
+        ':108C600041414141414141414141414141414141F4',
+        ':108C70004141414141414141414141414141FFFF68',
+    ])
+    script_exact = b'This is an edge case test to fill the last byte of ' \
+                   b'the first chunk.\n' + (b'A' * 49)
+    expected_result_exact = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE00076D61696E2E707954686973206982',
+        ':108C10007320616E206564676520636173652074ED',
+        ':108C200065737420746F2066696C6C2074686520AD',
+        ':108C30006C6173742062797465206F662074686556',
+        ':108C4000206669727374206368756E6B2E0A4141E9',
+        ':108C50004141414141414141414141414141414104',
+        ':108C600041414141414141414141414141414141F4',
+        ':108C70004141414141414141414141414141410223',
+        ':108C800001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2',
+        ':108C9000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE4',
+        ':108CA000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD4',
+        ':108CB000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC4',
+        ':108CC000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB4',
+        ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
+        ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
+        ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+    ])
+    script_large = b'This is an edge case test to fill the last byte of ' \
+                   b'the first chunk.\n' + (b'A' * 50)
+    expected_result_large = '\n'.join([
+        ':020000040003F7',
+        ':108C0000FE01076D61696E2E707954686973206981',
+        ':108C10007320616E206564676520636173652074ED',
+        ':108C200065737420746F2066696C6C2074686520AD',
+        ':108C30006C6173742062797465206F662074686556',
+        ':108C4000206669727374206368756E6B2E0A4141E9',
+        ':108C50004141414141414141414141414141414104',
+        ':108C600041414141414141414141414141414141F4',
+        ':108C70004141414141414141414141414141410223',
+        ':108C80000141FFFFFFFFFFFFFFFFFFFFFFFFFFFFB0',
+        ':108C9000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE4',
+        ':108CA000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD4',
+        ':108CB000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC4',
+        ':108CC000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB4',
+        ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
+        ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
+        ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+    ])
+    result_short = uflash.script_to_fs(script_short)
+    result_exact = uflash.script_to_fs(script_exact)
+    result_large = uflash.script_to_fs(script_large)
+    assert result_short == expected_result_short, script_short
+    assert result_exact == expected_result_exact, script_exact
+    assert result_large == expected_result_large, script_large
+
+
+def test_script_to_fs_script_too_long():
+    script = (b'shouldfit' * 3023)[:-1]
+    _ = uflash.script_to_fs(script)
+
+    script += b'1'
+    with pytest.raises(ValueError) as ex:
+        _ = uflash.script_to_fs(script)
+    assert 'Python script must be less than' in ex.value.args[0]
