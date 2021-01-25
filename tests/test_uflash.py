@@ -35,6 +35,51 @@ TEST_SCRIPT = b"""from microbit import *
 display.scroll('Hello, World!')
 """
 
+TEST_SCRIPT_FS = b'This is a slightly longer bit of test that ' \
+    b'should be more than a single block\nThis is a slightly longer bit of ' \
+    b'test that should be more than a single block'
+TEST_SCRIPT_FS_V1_HEX_LIST = [
+    ':020000040003F7',
+    ':108C0000FE26076D61696E2E70795468697320695C',
+    ':108C100073206120736C696768746C79206C6F6E67',
+    ':108C200067657220626974206F66207465737420B2',
+    ':108C3000746861742073686F756C64206265206D60',
+    ':108C40006F7265207468616E20612073696E676C55',
+    ':108C50006520626C6F636B0A5468697320697320C6',
+    ':108C60006120736C696768746C79206C6F6E6765DE',
+    ':108C70007220626974206F662074657374207402B8',
+    ':108C8000016861742073686F756C64206265206D83',
+    ':108C90006F7265207468616E20612073696E676C05',
+    ':108CA0006520626C6F636BFFFFFFFFFFFFFFFFFF3D',
+    ':108CB000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC4',
+    ':108CC000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB4',
+    ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
+    ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
+    ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+    ':01F80000FD0A',
+]
+TEST_SCRIPT_FS_V2_HEX_LIST = [
+    ':020000040006F4',
+    ':10D0000DFE26076D61696E2E70795468697320690B',
+    ':10D0100D73206120736C696768746C79206C6F6E16',
+    ':10D0200D67657220626974206F6620746573742061',
+    ':10D0300D746861742073686F756C64206265206D0F',
+    ':10D0400D6F7265207468616E20612073696E676C04',
+    ':10D0500D6520626C6F636B0A546869732069732075',
+    ':10D0600D6120736C696768746C79206C6F6E67658D',
+    ':10D0700D7220626974206F66207465737420740267',
+    ':10D0800D016861742073686F756C64206265206D32',
+    ':10D0900D6F7265207468616E20612073696E676CB4',
+    ':10D0A00D6520626C6F636BFFFFFFFFFFFFFFFFFFEC',
+    ':10D0B00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF73',
+    ':10D0C00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF63',
+    ':10D0D00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF53',
+    ':10D0E00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF43',
+    ':10D0F00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF33',
+    ':020000040007F3',
+    ':0120000DFDD5',
+]
+
 
 def test_get_version():
     """
@@ -903,9 +948,11 @@ def test_script_to_fs():
         ':108D40004141414141414141414141414141414113',
         ':108D50004141414141414141414141414141414103',
         ':108D600041414141414141414141414141414141F3',
-        ':108D700041414141414141414141FFFFFFFFFFFF6F'
+        ':108D700041414141414141414141FFFFFFFFFFFF6F',
+        ':01F80000FD0A',
+        '',
     ])
-    result = uflash.script_to_fs(script)
+    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
     assert result == expected_result, script
 
 
@@ -924,8 +971,10 @@ def test_script_to_fs_short():
         ':108C5000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF24',
         ':108C6000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF14',
         ':108C7000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF04',
+        ':01F80000FD0A',
+        '',
     ])
-    result = uflash.script_to_fs(script)
+    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
     assert result == expected_result, script
 
 
@@ -954,8 +1003,10 @@ def test_script_to_fs_two_chunks():
         ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
         ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
         ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+        ':01F80000FD0A',
+        '',
     ])
-    result = uflash.script_to_fs(script)
+    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
     assert result == expected_result, script
 
 
@@ -975,6 +1026,8 @@ def test_script_to_fs_chunk_boundary():
         ':108C50004141414141414141414141414141414104',
         ':108C600041414141414141414141414141414141F4',
         ':108C70004141414141414141414141414141FFFF68',
+        ':01F80000FD0A',
+        '',
     ])
     script_exact = b'This is an edge case test to fill the last byte of ' \
                    b'the first chunk.\n' + (b'A' * 49)
@@ -996,6 +1049,8 @@ def test_script_to_fs_chunk_boundary():
         ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
         ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
         ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+        ':01F80000FD0A',
+        '',
     ])
     script_large = b'This is an edge case test to fill the last byte of ' \
                    b'the first chunk.\n' + (b'A' * 50)
@@ -1017,10 +1072,12 @@ def test_script_to_fs_chunk_boundary():
         ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
         ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
         ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
+        ':01F80000FD0A',
+        '',
     ])
-    result_short = uflash.script_to_fs(script_short)
-    result_exact = uflash.script_to_fs(script_exact)
-    result_large = uflash.script_to_fs(script_large)
+    result_short = uflash.script_to_fs(script_short, uflash._MICROBIT_ID_V1)
+    result_exact = uflash.script_to_fs(script_exact, uflash._MICROBIT_ID_V1)
+    result_large = uflash.script_to_fs(script_large, uflash._MICROBIT_ID_V1)
     assert result_short == expected_result_short, script_short
     assert result_exact == expected_result_exact, script_exact
     assert result_large == expected_result_large, script_large
@@ -1028,9 +1085,125 @@ def test_script_to_fs_chunk_boundary():
 
 def test_script_to_fs_script_too_long():
     script = (b'shouldfit' * 3023)[:-1]
-    _ = uflash.script_to_fs(script)
+    _ = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
 
     script += b'1'
     with pytest.raises(ValueError) as ex:
-        _ = uflash.script_to_fs(script)
+        _ = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
     assert 'Python script must be less than' in ex.value.args[0]
+
+
+def test_embed_fs_uhex():
+    uhex_list = [
+        # Section for V1 starts
+        ':020000040000FA',
+        ':0400000A9900C0DEBB',
+        ':1000000000400020218E01005D8E01005F8E010006',
+        ':1000100000000000000000000000000000000000E0',
+        ':10002000000000000000000000000000618E0100E0',
+        ':020000040001F9',
+        ':1000000003D13000F8BD4010F3E7331D0122180082',
+        ':10001000F8F7B2FD4460EFE7E4B30200F0B5070083',
+        ':1000200089B000201E000D00019215F0ECFB0E4B74',
+        ':10003000040007609F4203D1042302791343037134',
+        ':0888B00095880100C1000000E1',
+        # V1 UICR
+        ':020000041000EA',
+        ':1010C0007CB0EE17FFFFFFFF0A0000000000E30006',
+        ':0C10D000FFFFFFFF2D6D0300000000007B',
+        # Section for V2 starts
+        ':020000040000FA',
+        ':0400000A9903C0DEB8',
+        ':1000000D00040020810A000015070000610A0000AD',
+        ':1000100D1F07000029070000330700000000000043',
+        ':1000200D000000000000000000000000A50A000014',
+        ':1000300D3D070000000000004707000051070000C9',
+        # V2 UICR
+        ':020000041000EA',
+        ':0810140D0070070000E0070069',
+        # V2 Regions table (this in flash again)
+        ':020000040006F4',
+        ':102FC00D0100010000B00100000000000000000041',
+        ':102FD00D02021C00E46504009CA105000000000035',
+        ':102FE00D03006D0000600000000000000000000004',
+        ':102FF00DFE307F590100300003000C009DD7B1C198',
+        ':00000001FF',
+        ''
+    ]
+    uhex = '\n'.join(uhex_list)
+    v1_fs_i = 11
+    v2_fs_i = 20
+    expected_uhex = '\n'.join(
+        uhex_list[:v1_fs_i] +
+        TEST_SCRIPT_FS_V1_HEX_LIST +
+        uhex_list[v1_fs_i:v2_fs_i] +
+        TEST_SCRIPT_FS_V2_HEX_LIST +
+        uhex_list[v2_fs_i:]
+    )
+
+    uhex_with_fs = uflash.embed_fs_uhex(uhex, TEST_SCRIPT_FS)
+
+    assert expected_uhex == uhex_with_fs
+
+
+def test_embed_fs_uhex_extra_uicr_jump_record():
+    uhex_list = [
+        # Section for V1 starts
+        ':020000040000FA',
+        ':0400000A9900C0DEBB',
+        ':1000000000400020218E01005D8E01005F8E010006',
+        ':1000100000000000000000000000000000000000E0',
+        ':10002000000000000000000000000000618E0100E0',
+        ':10003000040007609F4203D1042302791343037134',
+        ':0888B00095880100C1000000E1',
+        # V1 UICR
+        ':020000041000EA',
+        ':1010C0007CB0EE17FFFFFFFF0A0000000000E30006',
+        ':0C10D000FFFFFFFF2D6D0300000000007B',
+        # Section for V2 starts
+        ':020000040000FA',
+        ':0400000A9903C0DEB8',
+        ':1000000D00040020810A000015070000610A0000AD',
+        ':020000040001F9',
+        ':1000000D03D13000F8BD4010F3E7331D0122180082',
+        ':1000100DF8F7B2FD4460EFE7E4B30200F0B5070083',
+        ':1000200D89B000201E000D00019215F0ECFB0E4B74',
+        # V2 UICR with an extra extended linear address record
+        ':020000040000FA',
+        ':020000041000EA',
+        ':0810140D0070070000E0070069',
+        # V2 Regions table (this in flash again)
+        ':020000040006F4',
+        ':102FC00D0100010000B00100000000000000000041',
+        ':102FD00D02021C00E46504009CA105000000000035',
+        ':102FE00D03006D0000600000000000000000000004',
+        ':102FF00DFE307F590100300003000C009DD7B1C198',
+        ':00000001FF',
+        ''
+    ]
+    uhex_ela_record = '\n'.join(uhex_list)
+    v1_fs_i = 7
+    v2_fs_i = 17
+    expected_uhex_ela_record = '\n'.join(
+        uhex_list[:v1_fs_i] +
+        TEST_SCRIPT_FS_V1_HEX_LIST +
+        uhex_list[v1_fs_i:v2_fs_i] +
+        TEST_SCRIPT_FS_V2_HEX_LIST +
+        uhex_list[v2_fs_i:]
+    )
+    # Replace Extended linear Address with Segmented record
+    uhex_list[v2_fs_i] = ':020000020000FC'
+    uhex_esa_record = '\n'.join(uhex_list)
+    expected_uhex_esa_record = '\n'.join(
+        uhex_list[:v1_fs_i] +
+        TEST_SCRIPT_FS_V1_HEX_LIST +
+        uhex_list[v1_fs_i:v2_fs_i] +
+        TEST_SCRIPT_FS_V2_HEX_LIST +
+        uhex_list[v2_fs_i:]
+    )
+
+    uhex_ela_with_fs = uflash.embed_fs_uhex(uhex_ela_record, TEST_SCRIPT_FS)
+    uhex_esa_with_fs = uflash.embed_fs_uhex(uhex_esa_record, TEST_SCRIPT_FS)
+
+    assert expected_uhex_ela_record == uhex_ela_with_fs
+    assert expected_uhex_esa_record == uhex_esa_with_fs

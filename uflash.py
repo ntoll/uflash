@@ -57,9 +57,16 @@ MICROPYTHON_VERSION = '1.0.1'
 _SCRIPT_ADDR = 0x3e000
 _MAX_SIZE = 8188
 
-#: Filesystem boundaries, this data might change in other MicroPython versions.
-FS_START_ADDR = 0x38C00
-FS_END_ADDR = 0x3F800
+#: Filesystem boundaries, this might change with different MicroPython builds.
+_MICROBIT_ID_V1 = '9900'
+_FS_START_ADDR_V1 = 0x38C00
+# UICR value 0x40000 - 0x400 (scratch page) - 0x400 (mag page) = 0x3F800
+_FS_END_ADDR_V1 = 0x3F800
+
+_MICROBIT_ID_V2 = '9903'
+_FS_START_ADDR_V2 = 0x6D000
+# Flash region value 0x73000 - 0x1000 (scratch page) = 0x72000
+_FS_END_ADDR_V2 = 0x72000
 
 
 def get_version():
@@ -85,7 +92,7 @@ def strfunc(raw):
     return str(raw) if sys.version_info[0] == 2 else str(raw, 'utf-8')
 
 
-def script_to_fs(script):
+def script_to_fs(script, microbit_version_id):
     """
     Convert a Python script (in bytes format) into Intel Hex records within
     the micro:bit MicroPython filesystem.
@@ -93,9 +100,29 @@ def script_to_fs(script):
     For more info:
     https://github.com/bbcmicrobit/micropython/blob/v1.0.1/source/microbit/filesystem.c
     """
+    if not script:
+        return ''
+    # Convert line endings in case the file was created on Windows.
+    script = script.replace(b'\r\n', b'\n')
+    script = script.replace(b'\r', b'\n')
+
+    # Find fs boundaries based on micro:bit version ID
+    if microbit_version_id == _MICROBIT_ID_V1:
+        fs_start_address = _FS_START_ADDR_V1
+        fs_end_address = _FS_END_ADDR_V1
+        universal_data_record = False
+    elif microbit_version_id == _MICROBIT_ID_V2:
+        fs_start_address = _FS_START_ADDR_V2
+        fs_end_address = _FS_END_ADDR_V2
+        universal_data_record = True
+    else:
+        raise ValueError(
+            'Incompatible micro:bit ID found: {}'.format(microbit_version_id)
+        )
+
     chunk_size = 128       # Filesystem chunks configure in MP to 128 bytes
     chunk_data_size = 126  # 1st & last bytes are the prev/next chunk pointers
-    fs_size = FS_END_ADDR - FS_START_ADDR
+    fs_size = fs_end_address - fs_start_address
     # Normally file data size depends on filename size and other files, but as
     # uFlash only supports a single file with a know name we can calculate it
     main_py_max_size = ((fs_size / chunk_size) * chunk_data_size) - 9
@@ -138,7 +165,81 @@ def script_to_fs(script):
 
     # For Python2 compatibility we need to explicitly convert to bytes
     data = b''.join([bytes(c) for c in chunks])
-    return bytes_to_ihex(FS_START_ADDR, data)
+    fs = bytes_to_ihex(fs_start_address, data, universal_data_record)
+    # Add this byte to include scratch page after fs
+    scratch = bytes_to_ihex(fs_end_address, b'\xfd', universal_data_record)
+    # If we are in the same Extended Linear Address range, remove record
+    ela_record_len = 16
+    if fs[:ela_record_len] == scratch[:ela_record_len]:
+        scratch = scratch[ela_record_len:]
+    return fs + '\n' + scratch + '\n'
+
+
+def embed_fs_uhex(universal_hex_str, python_code=None):
+    """
+    Given a string representing a MicroPython Universal Hex, it will embed a
+    Python script encoded into the MicroPython filesystem for each of the
+    Universal Hex sections, as the Universal Hex will contain a section for
+    micro:bit V1 and a section for micro:bit V2.
+
+    More information about the Universal Hex format:
+    https://github.com/microbit-foundation/spec-universal-hex
+
+    Returns a string of the Universal Hex with the embedded filesystem.
+
+    Will raise a ValueError if the Universal Hex doesn't follow the expected
+    format.
+
+    If the python_code is missing, it will return the unmodified
+    universal_hex_str.
+    """
+    if not python_code:
+        return universal_hex_str
+    # First let's separate the Universal Hex into the individual sections,
+    # Each section starts with an Extended Linear Address record (:02000004...)
+    # followed by s Block Start record (:0400000A...)
+    # We only expect two sections, one for V1 and one for V2
+    section_start = ':020000040000FA\n:0400000A'
+    second_section_i = universal_hex_str[len(section_start):].find(
+        section_start
+    ) + len(section_start)
+    uhex_sections = [
+        universal_hex_str[:second_section_i],
+        universal_hex_str[second_section_i:],
+    ]
+
+    # Now for each section we add the Python code to the filesystem
+    full_uhex_with_fs = ''
+    for section in uhex_sections:
+        # Block Start record starts like this, followed by device ID (4 chars)
+        block_start_record_start = ':0400000A'
+        block_start_record_i = section.find(block_start_record_start)
+        device_id_i = block_start_record_i + len(block_start_record_start)
+        device_id = section[device_id_i:device_id_i + 4]
+        # With the device ID we can encode the fs into hex records to inject
+        fs_hex = script_to_fs(python_code, device_id)
+        # In all Sections the fs will be placed at the end of the hex, right
+        # before the UICR, this is for compatibility with all DAPLink versions.
+        # V1 memory layout in sequential order: MicroPython + fs + UICR
+        # V2: SoftDevice + MicroPython + regions table + fs + bootloader + UICR
+        # V2 can manage the hex out of order, but some DAPLink versions in V1
+        # need the hex contents to be in order. So in V1 the fs can never go
+        # after the UICR (flash starts at address 0x0, UICR at 0x1000_0000),
+        # but placing it before should be compatible with all versions.
+        # We find the UICR records in the hex file by looking for an Extended
+        # Linear Address record with value 0x1000 (:020000041000EA).
+        uicr_i = section.rfind(':020000041000EA')
+        # In some cases an Extended Linear/Segmented Address record to 0x0000
+        # is present as part of UICR address jump, so take it into account.
+        ela_record = ':020000040000FA\n'
+        if section[:uicr_i].endswith(ela_record):
+            uicr_i -= len(ela_record)
+        esa_record = ':020000020000FC\n'
+        if section[:uicr_i].endswith(esa_record):
+            uicr_i -= len(esa_record)
+        # Now we know where to inject the fs hex block
+        full_uhex_with_fs += section[:uicr_i] + fs_hex + section[uicr_i:]
+    return full_uhex_with_fs
 
 
 def hexlify(script, minify=False):
@@ -168,7 +269,7 @@ def hexlify(script, minify=False):
     return bytes_to_ihex(_SCRIPT_ADDR, data)
 
 
-def bytes_to_ihex(addr, data):
+def bytes_to_ihex(addr, data, universal_data_record=False):
     """
     Converts a byte array (of type bytes) into string of Intel Hex records from
     a given address.
@@ -183,10 +284,12 @@ def bytes_to_ihex(addr, data):
     ela_checksump = (-(sum(bytearray(ela_chunk)))) & 0xff
     output = [':%s%02X' % (strfunc(binascii.hexlify(ela_chunk)).upper(),
                            ela_checksump)]
+    # Record Type
+    r = 0x0D if universal_data_record else 0x00
     # Now create the Intel Hex data records
     for i in range(0, len(data), 16):
         chunk = data[i:min(i + 16, len(data))]
-        chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, 0) + chunk
+        chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, r) + chunk
         checksum = (-(sum(bytearray(chunk)))) & 0xff
         hexline = ':%s%02X' % (strfunc(binascii.hexlify(chunk)).upper(),
                                checksum)
