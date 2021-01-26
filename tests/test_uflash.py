@@ -952,7 +952,11 @@ def test_script_to_fs():
         ':01F80000FD0A',
         '',
     ])
-    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
+
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800):
+        result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
+
     assert result == expected_result, script
 
 
@@ -974,45 +978,33 @@ def test_script_to_fs_short():
         ':01F80000FD0A',
         '',
     ])
-    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
+
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800):
+        result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
+
     assert result == expected_result, script
 
 
 def test_script_to_fs_two_chunks():
     """
-    Test script_to_fs with a script smaller than a fs chunk.
+    Test script_to_fs with a script that takes two chunks for V1 and V2.
     """
-    script = b'This is a slightly longer bit of test that should be ' \
-             b'more than a single block\nThis is a slightly longer ' \
-             b'bit of test that should be more than a single block'
-    expected_result = '\n'.join([
-        ':020000040003F7',
-        ':108C0000FE26076D61696E2E70795468697320695C',
-        ':108C100073206120736C696768746C79206C6F6E67',
-        ':108C200067657220626974206F66207465737420B2',
-        ':108C3000746861742073686F756C64206265206D60',
-        ':108C40006F7265207468616E20612073696E676C55',
-        ':108C50006520626C6F636B0A5468697320697320C6',
-        ':108C60006120736C696768746C79206C6F6E6765DE',
-        ':108C70007220626974206F662074657374207402B8',
-        ':108C8000016861742073686F756C64206265206D83',
-        ':108C90006F7265207468616E20612073696E676C05',
-        ':108CA0006520626C6F636BFFFFFFFFFFFFFFFFFF3D',
-        ':108CB000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC4',
-        ':108CC000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB4',
-        ':108CD000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA4',
-        ':108CE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF94',
-        ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
-        ':01F80000FD0A',
-        '',
-    ])
-    result = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
-    assert result == expected_result, script
+    expected_result_v1 = '\n'.join(TEST_SCRIPT_FS_V1_HEX_LIST + [''])
+    expected_result_v2 = '\n'.join(TEST_SCRIPT_FS_V2_HEX_LIST + [''])
+
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800):
+        result_v1 = uflash.script_to_fs(TEST_SCRIPT_FS, uflash._MICROBIT_ID_V1)
+        result_v2 = uflash.script_to_fs(TEST_SCRIPT_FS, uflash._MICROBIT_ID_V2)
+
+    assert result_v1 == expected_result_v1
+    assert result_v2 == expected_result_v2
 
 
 def test_script_to_fs_chunk_boundary():
     """
-    Test script_to_fs with a random example without anything special about it.
+    Test script_to_fs edge case with the taking exactly one chunk.
     """
     script_short = b'This is an edge case test to fill the last byte of ' \
                    b'the first chunk.\n' + (b'A' * 48)
@@ -1075,15 +1067,28 @@ def test_script_to_fs_chunk_boundary():
         ':01F80000FD0A',
         '',
     ])
-    result_short = uflash.script_to_fs(script_short, uflash._MICROBIT_ID_V1)
-    result_exact = uflash.script_to_fs(script_exact, uflash._MICROBIT_ID_V1)
-    result_large = uflash.script_to_fs(script_large, uflash._MICROBIT_ID_V1)
+
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800):
+        result_short = uflash.script_to_fs(
+            script_short, uflash._MICROBIT_ID_V1
+        )
+        result_exact = uflash.script_to_fs(
+            script_exact, uflash._MICROBIT_ID_V1
+        )
+        result_large = uflash.script_to_fs(
+            script_large, uflash._MICROBIT_ID_V1
+        )
+
     assert result_short == expected_result_short, script_short
     assert result_exact == expected_result_exact, script_exact
     assert result_large == expected_result_large, script_large
 
 
 def test_script_to_fs_script_too_long():
+    """
+    Test script_to_fs when the script is too long and won't fit.
+    """
     script = (b'shouldfit' * 3023)[:-1]
     _ = uflash.script_to_fs(script, uflash._MICROBIT_ID_V1)
 
@@ -1093,7 +1098,50 @@ def test_script_to_fs_script_too_long():
     assert 'Python script must be less than' in ex.value.args[0]
 
 
+def test_script_to_fs_empty_code():
+    """
+    Test script_to_fs results an empty string if the input code is empty.
+    """
+    result = uflash.script_to_fs('', uflash._MICROBIT_ID_V1)
+    assert result == ''
+
+
+def test_script_to_fs_line_endings():
+    """
+    Test script_to_fs converts line endings before embedding script.
+    """
+    script_win_lines = TEST_SCRIPT_FS.replace(b'\n', b'\r\n')
+    script_cr_lines = TEST_SCRIPT_FS.replace(b'\n', b'\r')
+    expected_result = '\n'.join(TEST_SCRIPT_FS_V1_HEX_LIST + [''])
+
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800):
+        result_win = uflash.script_to_fs(
+            script_win_lines, uflash._MICROBIT_ID_V1
+        )
+        result_cr = uflash.script_to_fs(
+            script_cr_lines, uflash._MICROBIT_ID_V1
+        )
+
+    assert result_win == expected_result
+    assert result_cr == expected_result
+
+
+def test_script_to_fs_unknown_microbit_id():
+    """
+    Test script_to_fs when the micro:bit ID is not recognised.
+    """
+    with pytest.raises(ValueError) as ex:
+        _ = uflash.script_to_fs(TEST_SCRIPT_FS, '1234')
+
+    assert 'Incompatible micro:bit ID found: 1234' in ex.value.args[0]
+
+
 def test_embed_fs_uhex():
+    """
+    Test embed_fs_uhex to add the filesystem into a Universal Hex with standard
+    two sections, one for V1 and one for V2.
+    """
     uhex_list = [
         # Section for V1 starts
         ':020000040000FA',
@@ -1141,7 +1189,11 @@ def test_embed_fs_uhex():
         uhex_list[v2_fs_i:]
     )
 
-    uhex_with_fs = uflash.embed_fs_uhex(uhex, TEST_SCRIPT_FS)
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800), \
+            mock.patch('uflash._FS_START_ADDR_V2', 0x6D000), \
+            mock.patch('uflash._FS_END_ADDR_V2', 0x72000):
+        uhex_with_fs = uflash.embed_fs_uhex(uhex, TEST_SCRIPT_FS)
 
     assert expected_uhex == uhex_with_fs
 
@@ -1202,8 +1254,16 @@ def test_embed_fs_uhex_extra_uicr_jump_record():
         uhex_list[v2_fs_i:]
     )
 
-    uhex_ela_with_fs = uflash.embed_fs_uhex(uhex_ela_record, TEST_SCRIPT_FS)
-    uhex_esa_with_fs = uflash.embed_fs_uhex(uhex_esa_record, TEST_SCRIPT_FS)
+    with mock.patch('uflash._FS_START_ADDR_V1', 0x38C00), \
+            mock.patch('uflash._FS_END_ADDR_V1', 0x3F800), \
+            mock.patch('uflash._FS_START_ADDR_V2', 0x6D000), \
+            mock.patch('uflash._FS_END_ADDR_V2', 0x72000):
+        uhex_ela_with_fs = uflash.embed_fs_uhex(
+            uhex_ela_record, TEST_SCRIPT_FS
+        )
+        uhex_esa_with_fs = uflash.embed_fs_uhex(
+            uhex_esa_record, TEST_SCRIPT_FS
+        )
 
     assert expected_uhex_ela_record == uhex_ela_with_fs
     assert expected_uhex_esa_record == uhex_esa_with_fs
