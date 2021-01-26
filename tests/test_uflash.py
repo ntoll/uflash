@@ -918,6 +918,55 @@ def test_py2hex_outdir_arg():
                                            keepname=True)
 
 
+def test_bytes_to_ihex():
+    """
+    Test bytes_to_ihex golden path for V1.
+    """
+    data = b'A' * 32
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':108C10004141414141414141414141414141414144',
+        ':108C20004141414141414141414141414141414134',
+    ])
+
+    result = uflash.bytes_to_ihex(0x38C10, data, universal_data_record=False)
+
+    assert result == expected_result
+
+
+def test_bytes_to_ihex_universal():
+    """
+    Test bytes_to_ihex golden path for V2.
+    """
+    data = b'A' * 32
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':108C100D4141414141414141414141414141414137',
+        ':108C200D4141414141414141414141414141414127',
+    ])
+
+    result = uflash.bytes_to_ihex(0x38C10, data, universal_data_record=True)
+
+    assert result == expected_result
+
+
+def test_bytes_to_ihex_inner_extended_linear_address_record():
+    """
+    Test bytes_to_ihex golden path for V2.
+    """
+    data = b'A' * 32
+    expected_result = '\n'.join([
+        ':020000040003F7',
+        ':10FFF00D41414141414141414141414141414141E4',
+        ':020000040004F6',
+        ':1000000D41414141414141414141414141414141D3',
+    ])
+
+    result = uflash.bytes_to_ihex(0x3FFF0, data, universal_data_record=True)
+
+    assert result == expected_result
+
+
 def test_script_to_fs():
     """
     Test script_to_fs with a random example without anything special about it.

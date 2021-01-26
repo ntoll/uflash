@@ -278,22 +278,36 @@ def bytes_to_ihex(addr, data, universal_data_record=False):
     address. To set the 2 MSB a Extended Linear Address record is needed first.
     As we don't know where in a Intel Hex file this will be injected, it
     creates a Extended Linear Address record at the top.
+
+    This function can also be used to generate data records for a Universal
+    Hex, in that case the micro:bit V1 data is exactly the same as a normal
+    Intel Hex, but the V2 data uses a new record type (0x0D) to encode the
+    data, so the `universal_data_record` argument is used to select the
+    record type.
     """
+
+    def make_record(data):
+        checksump = (-(sum(bytearray(data)))) & 0xff
+        return ':%s%02X' % (strfunc(binascii.hexlify(data)).upper(), checksump)
+
     # First create an Extended Linear Address Intel Hex record
-    ela_chunk = struct.pack('>BHBH', 0x02, 0x0000, 0x04, (addr >> 16) & 0xffff)
-    ela_checksump = (-(sum(bytearray(ela_chunk)))) & 0xff
-    output = [':%s%02X' % (strfunc(binascii.hexlify(ela_chunk)).upper(),
-                           ela_checksump)]
-    # Record Type
-    r = 0x0D if universal_data_record else 0x00
+    current_ela = (addr >> 16) & 0xffff
+    ela_chunk = struct.pack('>BHBH', 0x02, 0x0000, 0x04, current_ela)
+    output = [make_record(ela_chunk)]
+    # If the data is meant to go into a Universal Hex V2 section, then the
+    # record type needs to be 0x0D instead of 0x00 (V1 section still uses 0x00)
+    r_type = 0x0D if universal_data_record else 0x00
     # Now create the Intel Hex data records
     for i in range(0, len(data), 16):
+        # If we've jumped to the next 0x10000 address we'll need an ELA record
+        if ((addr >> 16) & 0xffff) != current_ela:
+            current_ela = (addr >> 16) & 0xffff
+            ela_chunk = struct.pack('>BHBH', 0x02, 0x0000, 0x04, current_ela)
+            output.append(make_record(ela_chunk))
+        # Now the data record
         chunk = data[i:min(i + 16, len(data))]
-        chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, r) + chunk
-        checksum = (-(sum(bytearray(chunk)))) & 0xff
-        hexline = ':%s%02X' % (strfunc(binascii.hexlify(chunk)).upper(),
-                               checksum)
-        output.append(hexline)
+        chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, r_type) + chunk
+        output.append(make_record(chunk))
         addr += 16
     return '\n'.join(output)
 
