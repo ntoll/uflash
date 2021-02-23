@@ -581,7 +581,7 @@ def py2hex(argv=None):
 
     if args.runtime:
         raise NotImplementedError("The 'runtime' flag is no longer supported.")
-    if args.extract:
+    if args.minify:
         print("The 'minify' flag is no longer supported, ignoring.",
               file=sys.stderr)
 
@@ -616,7 +616,7 @@ def main(argv=None):
                         help='This feature has been deprecated.')
     parser.add_argument('-e', '--extract',
                         action='store_true',
-                        help=('This feature has been deprecated.'), )
+                        help='This feature has been deprecated.')
     parser.add_argument('-w', '--watch',
                         action='store_true',
                         help='Watch the source file for changes.')
@@ -631,7 +631,7 @@ def main(argv=None):
         raise NotImplementedError("The 'runtime' flag is no longer supported.")
     if args.extract:
         raise NotImplementedError("The 'extract' flag is no longer supported.")
-    if args.extract:
+    if args.minify:
         print("The 'minify' flag is no longer supported, ignoring.",
               file=sys.stderr)
 
