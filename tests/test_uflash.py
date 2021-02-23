@@ -34,6 +34,11 @@ TEST_SCRIPT = b"""from microbit import *
 
 display.scroll('Hello, World!')
 """
+TEST_SCRIPT_HEXLIFIED = ':020000040003F7\n' \
+    ':10E000004D50380066726F6D206D6963726F626982\n' \
+    ':10E010007420696D706F7274202A0A0A64697370C3\n' \
+    ':10E020006C61792E7363726F6C6C282748656C6C19\n' \
+    ':10E030006F2C20576F726C642127290A00000000A2'
 
 TEST_SCRIPT_FS = b'This is a slightly longer bit of test that ' \
     b'should be more than a single block\nThis is a slightly longer bit of ' \
@@ -145,37 +150,12 @@ def test_get_version():
     assert result == '.'.join([str(i) for i in uflash._VERSION])
 
 
-def test_get_minifier():
-    """
-    When a minifier was loaded a string identifing it should be
-    returned, otherwise None
-    """
-    with mock.patch('uflash.can_minify', False):
-        assert uflash.get_minifier() is None
-    with mock.patch('uflash.can_minify', True):
-        assert len(uflash.get_minifier()) > 0
-
-
-def test_hexlify():
-    """
-    Ensure we get the expected .hex encoded result from a "good" call to the
-    function.
-    """
-    result = uflash.hexlify(TEST_SCRIPT)
-    lines = result.split()
-    # The first line should be the extended linear address, ox0003
-    assert lines[0] == ':020000040003F7'
-    # There should be the expected number of lines.
-    assert len(lines) == 5
-
-
 def test_unhexlify():
     """
     Ensure that we can get the script back out using unhexlify and that the
     result is a properly decoded string.
     """
-    hexlified = uflash.hexlify(TEST_SCRIPT)
-    unhexlified = uflash.unhexlify(hexlified)
+    unhexlified = uflash.unhexlify(TEST_SCRIPT_HEXLIFIED)
     assert unhexlified == TEST_SCRIPT.decode('utf-8')
 
 
@@ -193,91 +173,6 @@ def test_unhexlify_bad_unicode():
     """
     assert '' == uflash.unhexlify(
            ':020000040003F7\n:10E000004D50FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
-
-
-def test_hexlify_empty_script():
-    """
-    The function returns an empty string if the script is empty.
-    """
-    assert uflash.hexlify('') == ''
-
-
-def test_embed_hex():
-    """
-    Ensure the good case works as expected.
-    """
-    python = uflash.hexlify(TEST_SCRIPT)
-    result = uflash.embed_hex(uflash._RUNTIME, python)
-    # The resulting hex should be of the expected length.
-    assert len(result) == len(python) + len(uflash._RUNTIME) + 1  # +1 for \n
-    # The hex should end with a newline '\n'
-    assert result[-1:] == '\n'
-    # The Python hex should be in the correct location.
-    py_list = python.split()
-    result_list = result.split()
-    start_of_python_from_end = len(py_list) + 5
-    start_of_python = len(result_list) - start_of_python_from_end
-    assert result_list[start_of_python:-5] == py_list
-    # The firmware should enclose the Python correctly.
-    firmware_list = uflash._RUNTIME.split()
-    assert firmware_list[:-5] == result_list[:-start_of_python_from_end]
-    assert firmware_list[-5:] == result_list[-5:]
-
-
-def test_embed_no_python():
-    """
-    The function returns the firmware hex value if there is no Python hex.
-    """
-    assert uflash.embed_hex('foo') == 'foo'
-
-
-def test_embed_no_runtime():
-    """
-    The function raises a ValueError if there is no runtime hex.
-    """
-    with pytest.raises(ValueError) as ex:
-        uflash.embed_hex(None)
-    assert ex.value.args[0] == 'MicroPython runtime hex required.'
-
-
-def test_extract():
-    """
-    The script should be returned as a string (if there is one).
-    """
-    python = uflash.hexlify(TEST_SCRIPT)
-    result = uflash.embed_hex(uflash._RUNTIME, python)
-    extracted = uflash.extract_script(result)
-    assert extracted == TEST_SCRIPT.decode('utf-8')
-
-
-def test_extract_sandwiched():
-    """
-    The script hex is packed with additional data above and bellow and should
-    still be returned as a the original string only.
-    """
-    python = uflash.hexlify(TEST_SCRIPT)
-    python_hex_lines = python.split('\n')
-    python_sandwiched = [python_hex_lines[0]] + \
-        [':10DFE000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF41'] + \
-        python_hex_lines[1:] + [':10E50000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1B']
-    result = uflash.embed_hex(uflash._RUNTIME, '\n'.join(python_sandwiched))
-    extracted = uflash.extract_script(result)
-    assert extracted == TEST_SCRIPT.decode('utf-8')
-
-
-def test_extract_not_valid_hex():
-    """
-    Return a sensible message if the hex file isn't valid
-    """
-    assert uflash.extract_script('invalid input') == ''
-
-
-def test_extract_no_python():
-    """
-    Ensure that if there's no Python in the input hex then just return an empty
-    (False) string.
-    """
-    assert uflash.extract_script(uflash._RUNTIME) == ''
 
 
 def test_find_microbit_posix_exists():
@@ -598,15 +493,6 @@ def test_hexlify_minify_without_minifier():
             uflash.hexlify(TEST_SCRIPT, minify=True)
 
 
-def test_hexlify_minify():
-    """
-    Check mangle is called as expected
-    """
-    with mock.patch('nudatus.mangle') as mangle:
-        uflash.hexlify(TEST_SCRIPT, minify=True)
-        mangle.assert_called_once_with(TEST_SCRIPT.decode('utf-8'))
-
-
 def test_main_no_args():
     """
     If there are no args into the main function, it simply calls flash with
@@ -734,17 +620,24 @@ def test_watch_raises(capsys):
     assert expected in stderr
 
 
-def test_extract_raises(capsys):
+def test_runtime_not_implemented(capsys):
     """
-    If the extract system goes wrong, it should say that's what happened
+    Raises a NotImplementedError when trying to use the extract flag.
     """
-    with mock.patch('uflash.extract', side_effect=RuntimeError("boom")):
-        with pytest.raises(SystemExit):
-            uflash.main(argv=['--extract', 'test.py'])
+    with pytest.raises(NotImplementedError):
+        uflash.main(argv=['--runtime', 'test.hex'])
+        _, stderr = capsys.readouterr()
+        assert "The 'runtime' flag is no longer supported." in stderr
 
-    _, stderr = capsys.readouterr()
-    expected = 'Error extracting test.py'
-    assert expected in stderr
+
+def test_extract_not_implemented(capsys):
+    """
+    Raises a NotImplementedError when trying to use the extract flag.
+    """
+    with pytest.raises(NotImplementedError):
+        uflash.main(argv=['--extract', 'test.py'])
+        _, stderr = capsys.readouterr()
+        assert "The 'extract' flag is no longer supported." in stderr
 
 
 def test_main_two_args():
@@ -820,39 +713,6 @@ def test_main_watch_flag():
                                                 path_to_runtime=None)
 
 
-def test_extract_command():
-    """
-    Test the command-line script extract feature
-    """
-    with mock.patch('uflash.extract') as mock_extract:
-        uflash.main(argv=['-e', 'hex.hex', 'foo.py'])
-        mock_extract.assert_called_once_with('hex.hex', ['foo.py'])
-
-
-def test_extract_paths():
-    """
-    Test the different paths of the extract() function.
-    It should open and extract the contents of the file (input arg)
-    When called with only an input it should print the output of extract_script
-    When called with two arguments it should write the output to the output arg
-    """
-    mock_e = mock.MagicMock(return_value=b'print("hello, world!")')
-    mock_o = mock.mock_open(read_data='script')
-
-    with mock.patch('uflash.extract_script', mock_e) as mock_extract_script, \
-            mock.patch.object(builtins, 'print') as mock_print, \
-            mock.patch.object(builtins, 'open', mock_o) as mock_open:
-        uflash.extract('foo.hex')
-        mock_open.assert_called_once_with('foo.hex', 'r')
-        mock_extract_script.assert_called_once_with('script')
-        mock_print.assert_called_once_with(b'print("hello, world!")')
-
-        uflash.extract('foo.hex', 'out.py')
-        assert mock_open.call_count == 3
-        mock_open.assert_called_with('out.py', 'w')
-        assert mock_open.return_value.write.call_count == 1
-
-
 def test_extract_command_source_only():
     """
     If there is no target file the extract command should write to stdout.
@@ -866,14 +726,6 @@ def test_extract_command_source_only():
         mock_open.assert_any_call('hex.hex', 'r')
         mock_extract_script.assert_called_once_with('script')
         mock_print.assert_any_call(b'print("hello, world!")')
-
-
-def test_extract_command_no_source():
-    """
-    If there is no source file the extract command should complain
-    """
-    with pytest.raises(TypeError):
-        uflash.extract(None, None)
 
 
 def test_watch_no_source():
@@ -931,35 +783,20 @@ def test_py2hex_one_arg():
     with mock.patch('uflash.flash') as mock_flash:
         uflash.py2hex(argv=['tests/example.py'])
         mock_flash.assert_called_once_with(path_to_python='tests/example.py',
-                                           path_to_runtime=None,
                                            paths_to_microbits=['tests'],
-                                           minify=False,
                                            keepname=True)
 
 
-def test_py2hex_runtime_arg():
-    """
-    Test a simple call to main().
-    """
-    with mock.patch('uflash.flash') as mock_flash:
-        uflash.py2hex(argv=['tests/example.py', '-r', 'tests/fake.hex'])
-        mock_flash.assert_called_once_with(path_to_python='tests/example.py',
-                                           path_to_runtime='tests/fake.hex',
-                                           paths_to_microbits=['tests'],
-                                           minify=False,
-                                           keepname=True)
-
-
-def test_py2hex_minify_arg():
+def test_py2hex_minify_arg(capsys):
     """
     Test a simple call to main().
     """
     with mock.patch('uflash.flash') as mock_flash:
         uflash.py2hex(argv=['tests/example.py', '-m'])
+        _, stderr = capsys.readouterr()
+        assert "The 'minify' flag is no longer supported, ignoring" in stderr
         mock_flash.assert_called_once_with(path_to_python='tests/example.py',
-                                           path_to_runtime=None,
                                            paths_to_microbits=['tests'],
-                                           minify=True,
                                            keepname=True)
 
 
@@ -970,9 +807,7 @@ def test_py2hex_outdir_arg():
     with mock.patch('uflash.flash') as mock_flash:
         uflash.py2hex(argv=['tests/example.py', '-o', '/tmp'])
         mock_flash.assert_called_once_with(path_to_python='tests/example.py',
-                                           path_to_runtime=None,
                                            paths_to_microbits=['/tmp'],
-                                           minify=False,
                                            keepname=True)
 
 
