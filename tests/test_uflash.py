@@ -58,6 +58,15 @@ TEST_SCRIPT_FS_V1_HEX_LIST = [
     ':108CF000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF84',
     ':01F80000FD0A',
 ]
+TEST_SCRIPT_FS_V1_HEX_PADDING_LIST = [
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':0700000CFFFFFFFFFFFFFFF4',
+]
 TEST_SCRIPT_FS_V2_HEX_LIST = [
     ':020000040006F4',
     ':10D0000DFE26076D61696E2E70795468697320690B',
@@ -78,6 +87,15 @@ TEST_SCRIPT_FS_V2_HEX_LIST = [
     ':10D0F00DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF33',
     ':020000040007F3',
     ':0120000DFDD5',
+]
+TEST_SCRIPT_FS_V2_HEX_PADDING_LIST = [
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':1000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4',
+    ':0900000CFFFFFFFFFFFFFFFFFFF4',
+    ':0600000CFFFFFFFFFFFFF4',
 ]
 TEST_UNIVERSAL_HEX_LIST = [
     # Section for V1 starts
@@ -1232,13 +1250,16 @@ def test_embed_fs_uhex():
     two sections, one for V1 and one for V2.
     """
     uhex = '\n'.join(TEST_UNIVERSAL_HEX_LIST)
+    uhex_alignment = len(uhex) % 512
     v1_fs_i = 11
     v2_fs_i = 20
     expected_uhex = '\n'.join(
         TEST_UNIVERSAL_HEX_LIST[:v1_fs_i] +
         TEST_SCRIPT_FS_V1_HEX_LIST +
+        TEST_SCRIPT_FS_V1_HEX_PADDING_LIST +
         TEST_UNIVERSAL_HEX_LIST[v1_fs_i:v2_fs_i] +
         TEST_SCRIPT_FS_V2_HEX_LIST +
+        TEST_SCRIPT_FS_V2_HEX_PADDING_LIST +
         TEST_UNIVERSAL_HEX_LIST[v2_fs_i:]
     )
 
@@ -1249,6 +1270,43 @@ def test_embed_fs_uhex():
         uhex_with_fs = uflash.embed_fs_uhex(uhex, TEST_SCRIPT_FS)
 
     assert expected_uhex == uhex_with_fs
+    assert uhex_alignment == (len(uhex_with_fs) % 512)
+
+
+def test_pad_hex_records():
+    """
+    Test the function pads a generic fs hex block to 512 byte alignment.
+    """
+    fs_v1_hex_str = "\n".join(TEST_SCRIPT_FS_V1_HEX_LIST)
+    fs_v2_hex_str = "\n".join(TEST_SCRIPT_FS_V2_HEX_LIST)
+
+    padded_v1 = uflash.pad_hex_string(fs_v1_hex_str)
+    padded_v2 = uflash.pad_hex_string(fs_v2_hex_str)
+
+    assert len(fs_v1_hex_str) % 512 != 0
+    assert len(padded_v1) % 512 == 0
+    assert len(fs_v2_hex_str) % 512 != 0
+    assert len(padded_v2) % 512 == 0
+
+
+def test_pad_hex_records_no_padding_needed():
+    """
+    Test the function doesn't pad is the string is already memory aligned.
+    """
+    fs_v1_hex_str = "\n".join(
+        TEST_SCRIPT_FS_V1_HEX_LIST + TEST_SCRIPT_FS_V1_HEX_PADDING_LIST + ['']
+    )
+    fs_v2_hex_str = "\n".join(
+        TEST_SCRIPT_FS_V2_HEX_LIST + TEST_SCRIPT_FS_V2_HEX_PADDING_LIST + ['']
+    )
+
+    padded_v1 = uflash.pad_hex_string(fs_v1_hex_str)
+    padded_v2 = uflash.pad_hex_string(fs_v2_hex_str)
+
+    assert len(fs_v1_hex_str) % 512 == 0
+    assert padded_v1 == fs_v1_hex_str
+    assert len(fs_v2_hex_str) % 512 == 0
+    assert padded_v2 == padded_v2
 
 
 def test_embed_fs_uhex_extra_uicr_jump_record():
@@ -1287,23 +1345,29 @@ def test_embed_fs_uhex_extra_uicr_jump_record():
         ''
     ]
     uhex_ela_record = '\n'.join(uhex_list)
+    uhex_ela_record_alignment = len(uhex_ela_record) % 512
     v1_fs_i = 7
     v2_fs_i = 17
     expected_uhex_ela_record = '\n'.join(
         uhex_list[:v1_fs_i] +
         TEST_SCRIPT_FS_V1_HEX_LIST +
+        TEST_SCRIPT_FS_V1_HEX_PADDING_LIST +
         uhex_list[v1_fs_i:v2_fs_i] +
         TEST_SCRIPT_FS_V2_HEX_LIST +
+        TEST_SCRIPT_FS_V2_HEX_PADDING_LIST +
         uhex_list[v2_fs_i:]
     )
     # Replace Extended linear Address with Segmented record
     uhex_list[v2_fs_i] = ':020000020000FC'
     uhex_esa_record = '\n'.join(uhex_list)
+    uhex_esa_record_alignment = len(uhex_esa_record) % 512
     expected_uhex_esa_record = '\n'.join(
         uhex_list[:v1_fs_i] +
         TEST_SCRIPT_FS_V1_HEX_LIST +
+        TEST_SCRIPT_FS_V1_HEX_PADDING_LIST +
         uhex_list[v1_fs_i:v2_fs_i] +
         TEST_SCRIPT_FS_V2_HEX_LIST +
+        TEST_SCRIPT_FS_V2_HEX_PADDING_LIST +
         uhex_list[v2_fs_i:]
     )
 
@@ -1319,7 +1383,9 @@ def test_embed_fs_uhex_extra_uicr_jump_record():
         )
 
     assert expected_uhex_ela_record == uhex_ela_with_fs
+    assert uhex_ela_record_alignment == (len(uhex_ela_with_fs) % 512)
     assert expected_uhex_esa_record == uhex_esa_with_fs
+    assert uhex_esa_record_alignment == (len(uhex_esa_with_fs) % 512)
 
 
 def test_embed_fs_uhex_empty_code():
