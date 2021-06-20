@@ -325,7 +325,10 @@ def bytes_to_ihex(addr, data, universal_data_record=False):
 def unhexlify(blob):
     """
     Takes a hexlified script and turns it back into a string of Python code.
-    Although this function is no longer used, it is maintained here for Mu.
+
+    IMPORTANT!
+    Although this function is no longer used in the uflash cli commands,
+    it is called by extract_script, which is maintained for Mu access.
     """
     lines = blob.split('\n')[1:]
     output = []
@@ -355,6 +358,8 @@ def extract_script(embedded_hex):
     Given a hex file containing the MicroPython runtime and an embedded Python
     script, will extract the original Python script.
     Returns a string containing the original embedded script.
+
+    IMPORTANT!
     Although this function is no longer used, it is maintained here for Mu.
     """
     hex_lines = embedded_hex.split('\n')
@@ -635,7 +640,7 @@ def main(argv=None):
         print("The 'minify' flag is no longer supported, ignoring.",
               file=sys.stderr)
 
-    elif args.watch:
+    if args.watch:
         try:
             watch_file(args.source, flash,
                        path_to_python=args.source,
