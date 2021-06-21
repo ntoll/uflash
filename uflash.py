@@ -21,12 +21,6 @@ import sys
 from subprocess import check_output
 import time
 
-# nudatus is an optional dependency
-can_minify = True
-try:
-    import nudatus
-except ImportError:  # pragma: no cover
-    can_minify = False
 
 #: The help text to be shown by uflash  when requested.
 _HELP_TEXT = """
@@ -51,11 +45,11 @@ microbit.  Accepts multiple input scripts and optionally one output directory.
 _VERSION = (1, 3, 0, )
 
 #: The version number reported by the bundled MicroPython in os.uname().
-MICROPYTHON_VERSION = '1.0.1'
+MICROPYTHON_V1_VERSION = '1.0.1'
+MICROPYTHON_V2_VERSION = '2.0.0-beta.3'
 
-#: The magic start address in flash memory and max size for a Python script.
+#: (Deprecated) The magic start address in flash memory to extract script.
 _SCRIPT_ADDR = 0x3e000
-_MAX_SIZE = 8188
 
 #: Filesystem boundaries, this might change with different MicroPython builds.
 _MICROBIT_ID_V1 = '9900'
@@ -68,21 +62,16 @@ _FS_START_ADDR_V2 = 0x6D000
 # Flash region value 0x73000 - 0x1000 (scratch page) = 0x72000
 _FS_END_ADDR_V2 = 0x72000
 
+_MAX_SIZE = min(
+    _FS_END_ADDR_V2 - _FS_START_ADDR_V2, _FS_END_ADDR_V1 - _FS_START_ADDR_V1
+)
+
 
 def get_version():
     """
     Returns a string representation of the version information of this project.
     """
     return '.'.join([str(i) for i in _VERSION])
-
-
-def get_minifier():
-    """
-    Report the minifier will be used when minify=True
-    """
-    if can_minify:
-        return 'nudatus'
-    return None
 
 
 def strfunc(raw):
@@ -290,33 +279,6 @@ def embed_fs_uhex(universal_hex_str, python_code=None):
     return full_uhex_with_fs
 
 
-def hexlify(script, minify=False):
-    """
-    Takes the byte content of a Python script and returns a hex encoded
-    version of it.
-
-    Based on the hexlify script in the microbit-micropython repository.
-    """
-    if not script:
-        return ''
-    # Convert line endings in case the file was created on Windows.
-    script = script.replace(b'\r\n', b'\n')
-    script = script.replace(b'\r', b'\n')
-    if minify:
-        if not can_minify:
-            raise ValueError("No minifier is available")
-        script = nudatus.mangle(script.decode('utf-8')).encode('utf-8')
-    # Add header, pad to multiple of 16 bytes.
-    data = b'MP' + struct.pack('<H', len(script)) + script
-    # Padding with null bytes in a 2/3 compatible way
-    data = data + (b'\x00' * (16 - len(data) % 16))
-    if len(data) > _MAX_SIZE:
-        # 'MP' = 2 bytes, script length is another 2 bytes.
-        raise ValueError("Python script must be less than 8188 bytes.")
-    # Convert to .hex format.
-    return bytes_to_ihex(_SCRIPT_ADDR, data)
-
-
 def bytes_to_ihex(addr, data, universal_data_record=False):
     """
     Converts a byte array (of type bytes) into string of Intel Hex records from
@@ -363,6 +325,10 @@ def bytes_to_ihex(addr, data, universal_data_record=False):
 def unhexlify(blob):
     """
     Takes a hexlified script and turns it back into a string of Python code.
+
+    IMPORTANT!
+    Although this function is no longer used in the uflash cli commands,
+    it is called by extract_script, which is maintained for Mu access.
     """
     lines = blob.split('\n')[1:]
     output = []
@@ -387,38 +353,14 @@ def unhexlify(blob):
         return ''
 
 
-def embed_hex(runtime_hex, python_hex=None):
-    """
-    Given a string representing the MicroPython runtime hex, will embed a
-    string representing a hex encoded Python script into it.
-
-    Returns a string representation of the resulting combination.
-
-    Will raise a ValueError if the runtime_hex is missing.
-
-    If the python_hex is missing, it will return the unmodified runtime_hex.
-    """
-    if not runtime_hex:
-        raise ValueError('MicroPython runtime hex required.')
-    if not python_hex:
-        return runtime_hex
-    py_list = python_hex.split()
-    runtime_list = runtime_hex.split()
-    embedded_list = []
-    # The embedded list should be the original runtime with the Python based
-    # hex embedded two lines from the end.
-    embedded_list.extend(runtime_list[:-5])
-    embedded_list.extend(py_list)
-    embedded_list.extend(runtime_list[-5:])
-    return '\n'.join(embedded_list) + '\n'
-
-
 def extract_script(embedded_hex):
     """
     Given a hex file containing the MicroPython runtime and an embedded Python
     script, will extract the original Python script.
-
     Returns a string containing the original embedded script.
+
+    IMPORTANT!
+    Although this function is no longer used, it is maintained here for Mu.
     """
     hex_lines = embedded_hex.split('\n')
     script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xffff)[2:].upper().zfill(4)
@@ -529,8 +471,7 @@ def save_hex(hex_file, path):
 
 
 def flash(path_to_python=None, paths_to_microbits=None,
-          path_to_runtime=None, python_script=None, minify=False,
-          keepname=False):
+          python_script=None, keepname=False):
     """
     Given a path to or source of a Python file will attempt to create a hex
     file and then flash it onto the referenced BBC micro:bit.
@@ -550,10 +491,6 @@ def flash(path_to_python=None, paths_to_microbits=None,
     If keepname is True the original filename (excluding the
     extension) will be preserved.
 
-    If the path_to_runtime is unspecified it will use the built in version of
-    the MicroPython runtime. This feature is useful if a custom build of
-    MicroPython is available.
-
     If the automatic discovery fails, then it will raise an IOError.
     """
     # Check for the correct version of Python.
@@ -561,24 +498,17 @@ def flash(path_to_python=None, paths_to_microbits=None,
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)):
         raise RuntimeError('Will only run on Python 2.7, or 3.3 and later.')
     # Grab the Python script (if needed).
-    python_hex = ''
     if path_to_python:
         (script_path, script_name) = os.path.split(path_to_python)
         (script_name_root, script_name_ext) = os.path.splitext(script_name)
         if not path_to_python.endswith('.py'):
             raise ValueError('Python files must end in ".py".')
-        with open(path_to_python, 'rb') as python_script:
-            python_hex = hexlify(python_script.read(), minify)
-    elif python_script:
-        python_hex = hexlify(python_script, minify)
+        with open(path_to_python, 'rb') as python_file:
+            python_script = python_file.read()
 
     runtime = _RUNTIME
-    # Load the hex for the runtime.
-    if path_to_runtime:
-        with open(path_to_runtime) as runtime_file:
-            runtime = runtime_file.read()
     # Generate the resulting hex file.
-    micropython_hex = embed_hex(runtime, python_hex)
+    micropython_hex = embed_fs_uhex(runtime, python_script)
     # Find the micro:bit.
     if not paths_to_microbits:
         found_microbit = find_microbit()
@@ -602,20 +532,6 @@ def flash(path_to_python=None, paths_to_microbits=None,
             save_hex(micropython_hex, hex_path)
     else:
         raise IOError('Unable to find micro:bit. Is it plugged in?')
-
-
-def extract(path_to_hex, output_path=None):
-    """
-    Given a path_to_hex file this function will attempt to extract the
-    embedded script from it and save it either to output_path or stdout
-    """
-    with open(path_to_hex, 'r') as hex_file:
-        python_script = extract_script(hex_file.read())
-        if output_path:
-            with open(output_path, 'w') as output_file:
-                output_file.write(python_script)
-        else:
-            print(python_script)
 
 
 def watch_file(path, func, *args, **kwargs):
@@ -658,24 +574,28 @@ def py2hex(argv=None):
     parser = argparse.ArgumentParser(description=_PY2HEX_HELP_TEXT)
     parser.add_argument('source', nargs='*', default=None)
     parser.add_argument('-r', '--runtime', default=None,
-                        help="Use the referenced MicroPython runtime.")
+                        help="This feature has been deprecated.")
     parser.add_argument('-o', '--outdir', default=None,
                         help="Output directory")
     parser.add_argument('-m', '--minify',
                         action='store_true',
-                        help='Minify the source')
+                        help='This feature has been deprecated.')
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + get_version())
     args = parser.parse_args(argv)
+
+    if args.runtime:
+        raise NotImplementedError("The 'runtime' flag is no longer supported.")
+    if args.minify:
+        print("The 'minify' flag is no longer supported, ignoring.",
+              file=sys.stderr)
 
     for py_file in args.source:
         if not args.outdir:
             (script_path, script_name) = os.path.split(py_file)
             args.outdir = script_path
         flash(path_to_python=py_file,
-              path_to_runtime=args.runtime,
               paths_to_microbits=[args.outdir],
-              minify=args.minify,
               keepname=True)  # keepname is always True in py2hex
 
 
@@ -698,36 +618,33 @@ def main(argv=None):
     parser.add_argument('source', nargs='?', default=None)
     parser.add_argument('target', nargs='*', default=None)
     parser.add_argument('-r', '--runtime', default=None,
-                        help="Use the referenced MicroPython runtime.")
+                        help='This feature has been deprecated.')
     parser.add_argument('-e', '--extract',
                         action='store_true',
-                        help=("Extract python source from a hex file"
-                              " instead of creating the hex file."), )
+                        help='This feature has been deprecated.')
     parser.add_argument('-w', '--watch',
                         action='store_true',
                         help='Watch the source file for changes.')
     parser.add_argument('-m', '--minify',
                         action='store_true',
-                        help='Minify the source')
+                        help='This feature has been deprecated.')
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + get_version())
     args = parser.parse_args(argv)
 
+    if args.runtime:
+        raise NotImplementedError("The 'runtime' flag is no longer supported.")
     if args.extract:
-        try:
-            extract(args.source, args.target)
-        except Exception as ex:
-            error_message = "Error extracting {source}: {error!s}"
-            print(error_message.format(source=args.source, error=ex),
-                  file=sys.stderr)
-            sys.exit(1)
+        raise NotImplementedError("The 'extract' flag is no longer supported.")
+    if args.minify:
+        print("The 'minify' flag is no longer supported, ignoring.",
+              file=sys.stderr)
 
-    elif args.watch:
+    if args.watch:
         try:
             watch_file(args.source, flash,
                        path_to_python=args.source,
-                       paths_to_microbits=args.target,
-                       path_to_runtime=args.runtime)
+                       paths_to_microbits=args.target)
         except Exception as ex:
             error_message = "Error watching {source}: {error!s}"
             print(error_message.format(source=args.source, error=ex),
@@ -737,26 +654,22 @@ def main(argv=None):
     else:
         try:
             flash(path_to_python=args.source, paths_to_microbits=args.target,
-                  path_to_runtime=args.runtime, minify=args.minify,
                   keepname=False)
         except Exception as ex:
-            error_message = (
-                "Error flashing {source} to {target}{runtime}: {error!s}"
-            )
+            error_message = ("Error flashing {source} to {target}: {error!s}")
             source = args.source
             target = args.target if args.target else "microbit"
-            if args.runtime:
-                runtime = "with runtime {runtime}".format(runtime=args.runtime)
-            else:
-                runtime = ""
-            print(error_message.format(source=source, target=target,
-                                       runtime=runtime, error=ex),
+            print(error_message.format(source=source, target=target, error=ex),
                   file=sys.stderr)
             sys.exit(1)
 
 
 #: A string representation of the MicroPython runtime hex.
-_RUNTIME = """:020000040000FA
+# This is a temporary hack to avoid changing the inline hex until the PR is
+# ready to be merged, otherwise the diff is too large to render in GitHub
+with open('upy-uh.hex', 'r') as runtime_file:
+    _RUNTIME = runtime_file.read()
+_OLD_RUNTIME = """:020000040000FA
 :1000000000400020218E01005D8E01005F8E010006
 :1000100000000000000000000000000000000000E0
 :10002000000000000000000000000000618E0100E0
