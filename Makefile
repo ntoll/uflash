@@ -1,5 +1,6 @@
 XARGS := xargs -0 $(shell test $$(uname) = Linux && echo -r)
 GREP_T_FLAG := $(shell test $$(uname) = Linux && echo -T)
+BLACK_INSTALLED := $(shell python -m black --version 2>/dev/null)
 
 all:
 	@echo "\nThere is no default Makefile target right now. Try:\n"
@@ -32,7 +33,7 @@ pyflakes:
 	find . \( -name _build -o -name var -o -path ./docs \) -type d -prune -o -name '*.py' -print0 | $(XARGS) pyflakes
 
 pep8: clean
-	find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pycodestyle --repeat --exclude=build/*,docs/* --ignore=E731,E402,W504
+	find . \( -name _build -o -name var \) -type d -prune -o -name '*.py' -print0 | $(XARGS) -n 1 pycodestyle --repeat --exclude=build/*,docs/* --ignore=E731,E402,W504,W503,E203
 
 test: clean
 	py.test
@@ -40,7 +41,21 @@ test: clean
 coverage: clean
 	py.test --cov-report term-missing --cov=uflash tests/
 
-check: clean pep8 pyflakes coverage
+tidy:
+ifdef BLACK_INSTALLED
+	python -m black -l79 .
+else
+	@echo Black not present
+endif
+
+black:
+ifdef BLACK_INSTALLED
+	python -m black --check -l79 .
+else
+	@echo Black not present
+endif
+
+check: clean pep8 pyflakes black coverage
 
 package: check
 	python setup.py sdist

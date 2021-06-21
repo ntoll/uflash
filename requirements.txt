@@ -4,8 +4,11 @@ pyflakes
 coverage
 sphinx
 pytest-cov
-nudatus>=0.0.2 
+nudatus>=0.0.2
 
 # Mock is bundled as part of unittest since Python 3.3
 # mock_open can't read binary data in <= 3.4.2
 mock ; python_version == '2.7' or python_version == '3.4'
+
+# Black is only available for Python 3.6+
+black>=19.10b0;python_version>'3.5'
