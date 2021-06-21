@@ -42,7 +42,7 @@ microbit.  Accepts multiple input scripts and optionally one output directory.
 """
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION of uflash
-_VERSION = (1, 3, 0, )
+_VERSION = (2, 0, 0, )
 
 #: The version number reported by the bundled MicroPython in os.uname().
 MICROPYTHON_V1_VERSION = '1.0.1'
