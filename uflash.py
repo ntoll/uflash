@@ -42,22 +42,26 @@ microbit.  Accepts multiple input scripts and optionally one output directory.
 """
 
 #: MAJOR, MINOR, RELEASE, STATUS [alpha, beta, final], VERSION of uflash
-_VERSION = (2, 0, 0, )
+_VERSION = (
+    2,
+    0,
+    0,
+)
 
 #: The version number reported by the bundled MicroPython in os.uname().
-MICROPYTHON_V1_VERSION = '1.0.1'
-MICROPYTHON_V2_VERSION = '2.0.0-beta.5'
+MICROPYTHON_V1_VERSION = "1.0.1"
+MICROPYTHON_V2_VERSION = "2.0.0-beta.5"
 
 #: (Deprecated) The magic start address in flash memory to extract script.
-_SCRIPT_ADDR = 0x3e000
+_SCRIPT_ADDR = 0x3E000
 
 #: Filesystem boundaries, this might change with different MicroPython builds.
-_MICROBIT_ID_V1 = '9900'
+_MICROBIT_ID_V1 = "9900"
 _FS_START_ADDR_V1 = 0x38C00
 # UICR value 0x40000 - 0x400 (scratch page) - 0x400 (mag page) = 0x3F800
 _FS_END_ADDR_V1 = 0x3F800
 
-_MICROBIT_ID_V2 = '9903'
+_MICROBIT_ID_V2 = "9903"
 _FS_START_ADDR_V2 = 0x6D000
 # Flash region value 0x73000 - 0x1000 (scratch page) = 0x72000
 _FS_END_ADDR_V2 = 0x72000
@@ -71,14 +75,14 @@ def get_version():
     """
     Returns a string representation of the version information of this project.
     """
-    return '.'.join([str(i) for i in _VERSION])
+    return ".".join([str(i) for i in _VERSION])
 
 
 def strfunc(raw):
     """
     Compatibility for 2 & 3 str()
     """
-    return str(raw) if sys.version_info[0] == 2 else str(raw, 'utf-8')
+    return str(raw) if sys.version_info[0] == 2 else str(raw, "utf-8")
 
 
 def script_to_fs(script, microbit_version_id):
@@ -91,10 +95,10 @@ def script_to_fs(script, microbit_version_id):
     https://github.com/bbcmicrobit/micropython/blob/v1.0.1/source/microbit/filesystem.c
     """
     if not script:
-        return ''
+        return ""
     # Convert line endings in case the file was created on Windows.
-    script = script.replace(b'\r\n', b'\n')
-    script = script.replace(b'\r', b'\n')
+    script = script.replace(b"\r\n", b"\n")
+    script = script.replace(b"\r", b"\n")
 
     # Find fs boundaries based on micro:bit version ID
     if microbit_version_id == _MICROBIT_ID_V1:
@@ -107,19 +111,21 @@ def script_to_fs(script, microbit_version_id):
         universal_data_record = True
     else:
         raise ValueError(
-            'Incompatible micro:bit ID found: {}'.format(microbit_version_id)
+            "Incompatible micro:bit ID found: {}".format(microbit_version_id)
         )
 
-    chunk_size = 128       # Filesystem chunks configure in MP to 128 bytes
+    chunk_size = 128  # Filesystem chunks configure in MP to 128 bytes
     chunk_data_size = 126  # 1st & last bytes are the prev/next chunk pointers
     fs_size = fs_end_address - fs_start_address
     # Total file size depends on data and filename length, as uFlash only
     # supports a single file with a known name (main.py) we can calculate it
     main_py_max_size = ((fs_size / chunk_size) * chunk_data_size) - 9
     if len(script) >= main_py_max_size:
-        raise ValueError("Python script must be less than {} bytes.".format(
-            main_py_max_size
-        ))
+        raise ValueError(
+            "Python script must be less than {} bytes.".format(
+                main_py_max_size
+            )
+        )
 
     # First file chunk opens with:
     # 0xFE - First byte indicates a file start
@@ -127,22 +133,22 @@ def script_to_fs(script, microbit_version_id):
     # 0x07 - Third byte is the filename length (7 letters for main.py)
     # Followed by UFT-8 encoded filename (in this case "main.py")
     # Followed by the UFT-8 encoded file data until end of chunk data
-    header = b'\xFE\xFF\x07\x6D\x61\x69\x6E\x2E\x70\x79'
+    header = b"\xFE\xFF\x07\x6D\x61\x69\x6E\x2E\x70\x79"
     first_chunk_data_size = chunk_size - len(header) - 1
     chunks = []
 
     # Star generating filesystem chunks
     chunk = header + script[:first_chunk_data_size]
     script = script[first_chunk_data_size:]
-    chunks.append(bytearray(chunk + (b'\xff' * (chunk_size - len(chunk)))))
+    chunks.append(bytearray(chunk + (b"\xff" * (chunk_size - len(chunk)))))
     while len(script):
         # The previous chunk tail points to this one
         chunk_index = len(chunks) + 1
         chunks[-1][-1] = chunk_index
         # This chunk head points to the previous
-        chunk = struct.pack('B', chunk_index - 1) + script[:chunk_data_size]
+        chunk = struct.pack("B", chunk_index - 1) + script[:chunk_data_size]
         script = script[chunk_data_size:]
-        chunks.append(bytearray(chunk + (b'\xff' * (chunk_size - len(chunk)))))
+        chunks.append(bytearray(chunk + (b"\xff" * (chunk_size - len(chunk)))))
 
     # Calculate the end of file offset that goes into the header
     last_chunk_offset = (len(chunk) - 1) % chunk_data_size
@@ -150,11 +156,14 @@ def script_to_fs(script, microbit_version_id):
     # Weird edge case: If we have a 0 offset we need a empty chunk at the end
     if last_chunk_offset == 0:
         chunks[-1][-1] = len(chunks) + 1
-        chunks.append(bytearray(struct.pack('B', len(chunks)) +
-                      (b'\xff' * (chunk_size - 1))))
+        chunks.append(
+            bytearray(
+                struct.pack("B", len(chunks)) + (b"\xff" * (chunk_size - 1))
+            )
+        )
 
     # For Python2 compatibility we need to explicitly convert to bytes
-    data = b''.join([bytes(c) for c in chunks])
+    data = b"".join([bytes(c) for c in chunks])
     fs_ihex = bytes_to_ihex(fs_start_address, data, universal_data_record)
     # Add this byte after the fs flash area to configure the scratch page there
     scratch_ihex = bytes_to_ihex(
@@ -235,8 +244,8 @@ def embed_fs_uhex(universal_hex_str, python_code=None):
     # Each section starts with an Extended Linear Address record (:02000004...)
     # followed by s Block Start record (:0400000A...)
     # We only expect two sections, one for V1 and one for V2
-    section_start = ':020000040000FA\n:0400000A'
-    second_section_i = universal_hex_str[len(section_start):].find(
+    section_start = ":020000040000FA\n:0400000A"
+    second_section_i = universal_hex_str[len(section_start) :].find(
         section_start
     ) + len(section_start)
     uhex_sections = [
@@ -245,13 +254,13 @@ def embed_fs_uhex(universal_hex_str, python_code=None):
     ]
 
     # Now for each section we add the Python code to the filesystem
-    full_uhex_with_fs = ''
+    full_uhex_with_fs = ""
     for section in uhex_sections:
         # Block Start record starts like this, followed by device ID (4 chars)
-        block_start_record_start = ':0400000A'
+        block_start_record_start = ":0400000A"
         block_start_record_i = section.find(block_start_record_start)
         device_id_i = block_start_record_i + len(block_start_record_start)
-        device_id = section[device_id_i:device_id_i + 4]
+        device_id = section[device_id_i : device_id_i + 4]
         # With the device ID we can encode the fs into hex records to inject
         fs_hex = script_to_fs(python_code, device_id)
         fs_hex = pad_hex_string(fs_hex)
@@ -265,13 +274,13 @@ def embed_fs_uhex(universal_hex_str, python_code=None):
         # but placing it before should be compatible with all versions.
         # We find the UICR records in the hex file by looking for an Extended
         # Linear Address record with value 0x1000 (:020000041000EA).
-        uicr_i = section.rfind(':020000041000EA')
+        uicr_i = section.rfind(":020000041000EA")
         # In some cases an Extended Linear/Segmented Address record to 0x0000
         # is present as part of UICR address jump, so take it into account.
-        ela_record = ':020000040000FA\n'
+        ela_record = ":020000040000FA\n"
         if section[:uicr_i].endswith(ela_record):
             uicr_i -= len(ela_record)
-        esa_record = ':020000020000FC\n'
+        esa_record = ":020000020000FC\n"
         if section[:uicr_i].endswith(esa_record):
             uicr_i -= len(esa_record)
         # Now we know where to inject the fs hex block
@@ -297,12 +306,12 @@ def bytes_to_ihex(addr, data, universal_data_record=False):
     """
 
     def make_record(data):
-        checksump = (-(sum(bytearray(data)))) & 0xff
-        return ':%s%02X' % (strfunc(binascii.hexlify(data)).upper(), checksump)
+        checksump = (-(sum(bytearray(data)))) & 0xFF
+        return ":%s%02X" % (strfunc(binascii.hexlify(data)).upper(), checksump)
 
     # First create an Extended Linear Address Intel Hex record
-    current_ela = (addr >> 16) & 0xffff
-    ela_chunk = struct.pack('>BHBH', 0x02, 0x0000, 0x04, current_ela)
+    current_ela = (addr >> 16) & 0xFFFF
+    ela_chunk = struct.pack(">BHBH", 0x02, 0x0000, 0x04, current_ela)
     output = [make_record(ela_chunk)]
     # If the data is meant to go into a Universal Hex V2 section, then the
     # record type needs to be 0x0D instead of 0x00 (V1 section still uses 0x00)
@@ -310,16 +319,16 @@ def bytes_to_ihex(addr, data, universal_data_record=False):
     # Now create the Intel Hex data records
     for i in range(0, len(data), 16):
         # If we've jumped to the next 0x10000 address we'll need an ELA record
-        if ((addr >> 16) & 0xffff) != current_ela:
-            current_ela = (addr >> 16) & 0xffff
-            ela_chunk = struct.pack('>BHBH', 0x02, 0x0000, 0x04, current_ela)
+        if ((addr >> 16) & 0xFFFF) != current_ela:
+            current_ela = (addr >> 16) & 0xFFFF
+            ela_chunk = struct.pack(">BHBH", 0x02, 0x0000, 0x04, current_ela)
             output.append(make_record(ela_chunk))
         # Now the data record
-        chunk = data[i:min(i + 16, len(data))]
-        chunk = struct.pack('>BHB', len(chunk), addr & 0xffff, r_type) + chunk
+        chunk = data[i : min(i + 16, len(data))]
+        chunk = struct.pack(">BHB", len(chunk), addr & 0xFFFF, r_type) + chunk
         output.append(make_record(chunk))
         addr += 16
-    return '\n'.join(output)
+    return "\n".join(output)
 
 
 def unhexlify(blob):
@@ -330,27 +339,27 @@ def unhexlify(blob):
     Although this function is no longer used in the uflash cli commands,
     it is called by extract_script, which is maintained for Mu access.
     """
-    lines = blob.split('\n')[1:]
+    lines = blob.split("\n")[1:]
     output = []
     for line in lines:
         # Discard the address, length etc. and reverse the hexlification
         output.append(binascii.unhexlify(line[9:-2]))
     # Check the header is correct ("MP<size>")
-    if (output[0][0:2].decode('utf-8') != u'MP'):
-        return ''
+    if output[0][0:2].decode("utf-8") != u"MP":
+        return ""
     # Strip off header
     output[0] = output[0][4:]
     # and strip any null bytes from the end
-    output[-1] = output[-1].strip(b'\x00')
-    script = b''.join(output)
+    output[-1] = output[-1].strip(b"\x00")
+    script = b"".join(output)
     try:
-        result = script.decode('utf-8')
+        result = script.decode("utf-8")
         return result
     except UnicodeDecodeError:
         # Return an empty string because in certain rare circumstances (where
         # the source hex doesn't include any embedded Python code) this
         # function may be passed in "raw" bytes from MicroPython.
-        return ''
+        return ""
 
 
 def extract_script(embedded_hex):
@@ -362,31 +371,37 @@ def extract_script(embedded_hex):
     IMPORTANT!
     Although this function is no longer used, it is maintained here for Mu.
     """
-    hex_lines = embedded_hex.split('\n')
-    script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xffff)[2:].upper().zfill(4)
-    script_addr_low = hex(_SCRIPT_ADDR & 0xffff)[2:].upper().zfill(4)
+    hex_lines = embedded_hex.split("\n")
+    script_addr_high = hex((_SCRIPT_ADDR >> 16) & 0xFFFF)[2:].upper().zfill(4)
+    script_addr_low = hex(_SCRIPT_ADDR & 0xFFFF)[2:].upper().zfill(4)
     start_script = None
     within_range = False
     # Look for the script start address
     for loc, val in enumerate(hex_lines):
-        if val[0:9] == ':02000004':
+        if val[0:9] == ":02000004":
             # Reached an extended address record, check if within script range
             within_range = val[9:13].upper() == script_addr_high
-        elif within_range and val[0:3] == ':10' and \
-                val[3:7].upper() == script_addr_low:
+        elif (
+            within_range
+            and val[0:3] == ":10"
+            and val[3:7].upper() == script_addr_low
+        ):
             start_script = loc
             break
     if start_script:
         # Find the end of the script
         end_script = None
         for loc, val in enumerate(hex_lines[start_script:]):
-            if val[9:41] == 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF':
+            if val[9:41] == "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF":
                 end_script = loc + start_script
                 break
         # Pass the extracted hex through unhexlify
-        return unhexlify('\n'.join(
-            hex_lines[start_script - 1:end_script if end_script else -6]))
-    return ''
+        return unhexlify(
+            "\n".join(
+                hex_lines[start_script - 1 : end_script if end_script else -6]
+            )
+        )
+    return ""
 
 
 def find_microbit():
@@ -399,15 +414,15 @@ def find_microbit():
     exception if run on any other operating system.
     """
     # Check what sort of operating system we're on.
-    if os.name == 'posix':
+    if os.name == "posix":
         # 'posix' means we're on Linux or OSX (Mac).
         # Call the unix "mount" command to list the mounted volumes.
-        mount_output = check_output('mount').splitlines()
+        mount_output = check_output("mount").splitlines()
         mounted_volumes = [x.split()[2] for x in mount_output]
         for volume in mounted_volumes:
-            if volume.endswith(b'MICROBIT'):
-                return volume.decode('utf-8')  # Return a string not bytes.
-    elif os.name == 'nt':
+            if volume.endswith(b"MICROBIT"):
+                return volume.decode("utf-8")  # Return a string not bytes.
+    elif os.name == "nt":
         # 'nt' means we're on Windows.
 
         def get_volume_name(disk_name):
@@ -420,8 +435,15 @@ def find_microbit():
             """
             vol_name_buf = ctypes.create_unicode_buffer(1024)
             ctypes.windll.kernel32.GetVolumeInformationW(
-                ctypes.c_wchar_p(disk_name), vol_name_buf,
-                ctypes.sizeof(vol_name_buf), None, None, None, None, 0)
+                ctypes.c_wchar_p(disk_name),
+                vol_name_buf,
+                ctypes.sizeof(vol_name_buf),
+                None,
+                None,
+                None,
+                None,
+                0,
+            )
             return vol_name_buf.value
 
         #
@@ -432,15 +454,17 @@ def find_microbit():
         #
         old_mode = ctypes.windll.kernel32.SetErrorMode(1)
         try:
-            for disk in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-                path = '{}:\\'.format(disk)
+            for disk in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                path = "{}:\\".format(disk)
                 #
                 # Don't bother looking if the drive isn't removable
                 #
                 if ctypes.windll.kernel32.GetDriveTypeW(path) != 2:
                     continue
-                if os.path.exists(path) and \
-                        get_volume_name(path) == 'MICROBIT':
+                if (
+                    os.path.exists(path)
+                    and get_volume_name(path) == "MICROBIT"
+                ):
                     return path
         finally:
             ctypes.windll.kernel32.SetErrorMode(old_mode)
@@ -461,17 +485,21 @@ def save_hex(hex_file, path):
     a ValueError.
     """
     if not hex_file:
-        raise ValueError('Cannot flash an empty .hex file.')
-    if not path.endswith('.hex'):
-        raise ValueError('The path to flash must be for a .hex file.')
-    with open(path, 'wb') as output:
-        output.write(hex_file.encode('ascii'))
+        raise ValueError("Cannot flash an empty .hex file.")
+    if not path.endswith(".hex"):
+        raise ValueError("The path to flash must be for a .hex file.")
+    with open(path, "wb") as output:
+        output.write(hex_file.encode("ascii"))
         output.flush()
         os.fsync(output.fileno())
 
 
-def flash(path_to_python=None, paths_to_microbits=None,
-          python_script=None, keepname=False):
+def flash(
+    path_to_python=None,
+    paths_to_microbits=None,
+    python_script=None,
+    keepname=False,
+):
     """
     Given a path to or source of a Python file will attempt to create a hex
     file and then flash it onto the referenced BBC micro:bit.
@@ -494,16 +522,18 @@ def flash(path_to_python=None, paths_to_microbits=None,
     If the automatic discovery fails, then it will raise an IOError.
     """
     # Check for the correct version of Python.
-    if not ((sys.version_info[0] == 3 and sys.version_info[1] >= 3) or
-            (sys.version_info[0] == 2 and sys.version_info[1] >= 7)):
-        raise RuntimeError('Will only run on Python 2.7, or 3.3 and later.')
+    if not (
+        (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
+        or (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
+    ):
+        raise RuntimeError("Will only run on Python 2.7, or 3.3 and later.")
     # Grab the Python script (if needed).
     if path_to_python:
         (script_path, script_name) = os.path.split(path_to_python)
         (script_name_root, script_name_ext) = os.path.splitext(script_name)
-        if not path_to_python.endswith('.py'):
+        if not path_to_python.endswith(".py"):
             raise ValueError('Python files must end in ".py".')
-        with open(path_to_python, 'rb') as python_file:
+        with open(path_to_python, "rb") as python_file:
             python_script = python_file.read()
 
     runtime = _RUNTIME
@@ -518,20 +548,20 @@ def flash(path_to_python=None, paths_to_microbits=None,
     if paths_to_microbits:
         for path in paths_to_microbits:
             if keepname and path_to_python:
-                hex_file_name = script_name_root + '.hex'
+                hex_file_name = script_name_root + ".hex"
                 hex_path = os.path.join(path, hex_file_name)
             else:
-                hex_path = os.path.join(path, 'micropython.hex')
+                hex_path = os.path.join(path, "micropython.hex")
             if path_to_python:
                 if not keepname:
-                    print('Flashing {} to: {}'.format(script_name, hex_path))
+                    print("Flashing {} to: {}".format(script_name, hex_path))
                 else:
-                    print('Hexifying {} as: {}'.format(script_name, hex_path))
+                    print("Hexifying {} as: {}".format(script_name, hex_path))
             else:
-                print('Flashing Python to: {}'.format(hex_path))
+                print("Flashing Python to: {}".format(hex_path))
             save_hex(micropython_hex, hex_path)
     else:
-        raise IOError('Unable to find micro:bit. Is it plugged in?')
+        raise IOError("Unable to find micro:bit. Is it plugged in?")
 
 
 def watch_file(path, func, *args, **kwargs):
@@ -540,7 +570,7 @@ def watch_file(path, func, *args, **kwargs):
     provided function with *args and **kwargs upon modification.
     """
     if not path:
-        raise ValueError('Please specify a file to watch')
+        raise ValueError("Please specify a file to watch")
     print('Watching "{}" for changes'.format(path))
     last_modification_time = os.path.getmtime(path)
     try:
@@ -568,35 +598,48 @@ def py2hex(argv=None):
 
     Exceptions are caught and printed for the user.
     """
-    if not argv:    # pragma: no cover
+    if not argv:  # pragma: no cover
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description=_PY2HEX_HELP_TEXT)
-    parser.add_argument('source', nargs='*', default=None)
-    parser.add_argument('-r', '--runtime', default=None,
-                        help="This feature has been deprecated.")
-    parser.add_argument('-o', '--outdir', default=None,
-                        help="Output directory")
-    parser.add_argument('-m', '--minify',
-                        action='store_true',
-                        help='This feature has been deprecated.')
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s ' + get_version())
+    parser.add_argument("source", nargs="*", default=None)
+    parser.add_argument(
+        "-r",
+        "--runtime",
+        default=None,
+        help="This feature has been deprecated.",
+    )
+    parser.add_argument(
+        "-o", "--outdir", default=None, help="Output directory"
+    )
+    parser.add_argument(
+        "-m",
+        "--minify",
+        action="store_true",
+        help="This feature has been deprecated.",
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + get_version()
+    )
     args = parser.parse_args(argv)
 
     if args.runtime:
         raise NotImplementedError("The 'runtime' flag is no longer supported.")
     if args.minify:
-        print("The 'minify' flag is no longer supported, ignoring.",
-              file=sys.stderr)
+        print(
+            "The 'minify' flag is no longer supported, ignoring.",
+            file=sys.stderr,
+        )
 
     for py_file in args.source:
         if not args.outdir:
             (script_path, script_name) = os.path.split(py_file)
             args.outdir = script_path
-        flash(path_to_python=py_file,
-              paths_to_microbits=[args.outdir],
-              keepname=True)  # keepname is always True in py2hex
+        flash(
+            path_to_python=py_file,
+            paths_to_microbits=[args.outdir],
+            keepname=True,
+        )  # keepname is always True in py2hex
 
 
 def main(argv=None):
@@ -615,21 +658,35 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description=_HELP_TEXT)
-    parser.add_argument('source', nargs='?', default=None)
-    parser.add_argument('target', nargs='*', default=None)
-    parser.add_argument('-r', '--runtime', default=None,
-                        help='This feature has been deprecated.')
-    parser.add_argument('-e', '--extract',
-                        action='store_true',
-                        help='This feature has been deprecated.')
-    parser.add_argument('-w', '--watch',
-                        action='store_true',
-                        help='Watch the source file for changes.')
-    parser.add_argument('-m', '--minify',
-                        action='store_true',
-                        help='This feature has been deprecated.')
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s ' + get_version())
+    parser.add_argument("source", nargs="?", default=None)
+    parser.add_argument("target", nargs="*", default=None)
+    parser.add_argument(
+        "-r",
+        "--runtime",
+        default=None,
+        help="This feature has been deprecated.",
+    )
+    parser.add_argument(
+        "-e",
+        "--extract",
+        action="store_true",
+        help="This feature has been deprecated.",
+    )
+    parser.add_argument(
+        "-w",
+        "--watch",
+        action="store_true",
+        help="Watch the source file for changes.",
+    )
+    parser.add_argument(
+        "-m",
+        "--minify",
+        action="store_true",
+        help="This feature has been deprecated.",
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + get_version()
+    )
     args = parser.parse_args(argv)
 
     if args.runtime:
@@ -637,30 +694,42 @@ def main(argv=None):
     if args.extract:
         raise NotImplementedError("The 'extract' flag is no longer supported.")
     if args.minify:
-        print("The 'minify' flag is no longer supported, ignoring.",
-              file=sys.stderr)
+        print(
+            "The 'minify' flag is no longer supported, ignoring.",
+            file=sys.stderr,
+        )
 
     if args.watch:
         try:
-            watch_file(args.source, flash,
-                       path_to_python=args.source,
-                       paths_to_microbits=args.target)
+            watch_file(
+                args.source,
+                flash,
+                path_to_python=args.source,
+                paths_to_microbits=args.target,
+            )
         except Exception as ex:
             error_message = "Error watching {source}: {error!s}"
-            print(error_message.format(source=args.source, error=ex),
-                  file=sys.stderr)
+            print(
+                error_message.format(source=args.source, error=ex),
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     else:
         try:
-            flash(path_to_python=args.source, paths_to_microbits=args.target,
-                  keepname=False)
+            flash(
+                path_to_python=args.source,
+                paths_to_microbits=args.target,
+                keepname=False,
+            )
         except Exception as ex:
-            error_message = ("Error flashing {source} to {target}: {error!s}")
+            error_message = "Error flashing {source} to {target}: {error!s}"
             source = args.source
             target = args.target if args.target else "microbit"
-            print(error_message.format(source=source, target=target, error=ex),
-                  file=sys.stderr)
+            print(
+                error_message.format(source=source, target=target, error=ex),
+                file=sys.stderr,
+            )
             sys.exit(1)
 
 
@@ -42689,5 +42758,5 @@ _RUNTIME = """:020000040000FA
 """
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main(sys.argv[1:])
