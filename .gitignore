@@ -9,6 +9,7 @@ build/*
 docs/_build/*
 .pytest_cache/*
 .idea/*
+.vscode/*
 htmlcov/*
 tests/example.hex
 deb_dist/*
